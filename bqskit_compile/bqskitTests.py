@@ -9,7 +9,7 @@ from bqskit.passes import (
 from bqskit.compiler import Compiler
 from bqskit.ir import Circuit
 import time
-from compile.partitioner import analyzePartitions
+from bqskit_compile.partitioner import analyzePartitions
 
 # NEED TO TRY CATCH FOR JSON SAVING.
 
@@ -26,7 +26,7 @@ passDict = {
 partitionerList = [ScanPartitioner(block_size=blockSize), QuickPartitioner(block_size=blockSize)]
 
 
-def bqskitOptimize(qc: str, save_path: str = None, success_threshold: float = 1e-8, replace_filter: str = 'less-than-multi', 
+def optimizationAnalysis(qc: str, save_path: str = None, success_threshold: float = 1e-8, replace_filter: str = 'less-than-multi', 
     partitioner: int = 0, pass_type: int = 0):
     """
     Optimizes a function using either LEAP or QSearch and returns the optimized circuit.
@@ -100,7 +100,7 @@ def bqskitOptimize(qc: str, save_path: str = None, success_threshold: float = 1e
     quantumCircuit_name = qc[index+1:len(qc)-5]
 
     # Circuit name after optimization 
-    circuit_name = data[1]
+    circuit_name = data[1].replace('.qasm', '')
 
     # Number of qubits in the circuit
     qc_qubit_count = circuit.num_qudits
@@ -116,8 +116,8 @@ def bqskitOptimize(qc: str, save_path: str = None, success_threshold: float = 1e
     # Gate set after compilation
     gates = list(circuit.gate_set)
     after_qc_gate_set = ''
-    for i in range(len(gates)- 1):
-        after_qc_gate_set += str(gates[i]) + ', '
+    for j in range(len(gates)- 1):
+        after_qc_gate_set += str(gates[j]) + ', '
     after_qc_gate_set += ' ' + str(gates[len(gates)-1])
 
 
@@ -143,87 +143,3 @@ def bqskitOptimize(qc: str, save_path: str = None, success_threshold: float = 1e
 
 
 # a function that will first creat benchmark circuit, and then optimize them using different predetermined schemes
-def tempName(qc: str, save_path: str = None, success_threshold: float = 1e-8, replace_filter: str = 'less-than-multi', 
-    partitioner: int = 0, pass_type: int = 0):
-    return '3'
-    
-
-    
-"""
-def qSearchOptimize(qc: str, save_path: str, success_threshold: float = 1e-8, replace_filter: str = 'less-than-multi', partitioner: int = 0):
-    
-    Optimize a quantum circuit using QSearch.
-
-    Parameters:
-        **qc** (str): Quantum circuit to be optimized. Path directory to QASM file.
-        **save_path** (str): Path to save the optimized quantum circuit in.
-        **success_threshold** (float): The distance threshold that determines successful termintation. (Default: 1e-8).
-        **replace_filter** (str): A predicate that determines if the resulting circuit, after calling loop_body on a block, 
-         should replace the original operation. (Default: less-than-multi).
-        **partitioner** (int): Partitions circuit into blocks of 3 qubits. Supports ScanPartitioner and QuickPartitioner. 0 for
-         ScanPartitioner and 1 for QuickPartitioner. (Default: 0).
-
-    Returns:
-        Optimized quantum circuit using QSearch algorithm and specified parameters. 
-    
-
-    # Optimization workflow. 
-    qSearchWorkflow = [UnfoldPass(), partitionerList[partitioner], ForEachBlockPass(QSearchSynthesisPass(
-        success_threshold=success_threshold), 
-        replace_filter=replace_filter)]
-    
-    # Optimize circuit
-    
-    quantumCircuit = Circuit.from_file(qc)
-    with Compiler() as compiler:
-        out = compiler.compile(quantumCircuit, qSearchWorkflow)
-    
-    
-    # Saves optimized circuit to save_path.
-    
-    index = qc.rfind('/')
-    file_name = qc[index+1:len(qc)-5]
-    out.save(f'{save_path}/{file_name}_{success_threshold}_{replace_filter}_{partitionerDict[partitioner]}_QSearch.qasm')
-
-    return out
-    
-
-def leapOptimize(qc: str, save_path: str, success_threshold: float = 1e-8, replace_filter: str = 'less-than-multi', partitioner: int = 0):
-    
-    Optimize a quantum circuit using LEAP.
-
-    Parameters:
-        **qc** (str): Quantum circuit to be optimized. Path directory to QASM file.
-        **save_path** (str): Path to save the optimized quantum circuit in.
-        **success_threshold** (float): The distance threshold that determines successful termintation. (Default: 1e-8).
-        **replace_filter** (str): A predicate that determines if the resulting circuit, after calling loop_body on a block, 
-         should replace the original operation. (Default: less-than-multi).
-        **partitioner** (int): Partitions circuit into blocks of 3 qubits. Supports ScanPartitioner and QuickPartitioner. 0 for
-         ScanPartitioner and 1 for QuickPartitioner. (Default: 0).
-
-        Returns:
-            Optimized quantum circuit using LEAP algorithm.
-    
-
-    # Optimization workflow
-    leapWorkflow = [UnfoldPass(), partitionerList[partitioner], ForEachBlockPass(LEAPSynthesisPass(
-        success_threshold=success_threshold), 
-        replace_filter=replace_filter)]
-
-    # Tries to optimize circuit.
-    try:
-        quantumCircuit = Circuit.from_file(qc)
-        with Compiler() as compiler:
-            out = compiler.compile(quantumCircuit, leapWorkflow)
-    except:
-        raise FileNotFoundError('QASM file does not exist or directory is invalid.')
-    
-    # Saves optimized circuit to save path.
-    try:
-            index = qc.rfind('/')
-            file_name = qc[index+1:len(qc)-5]
-            out.save(f'{save_path}/{file_name}_{success_threshold}_{replace_filter}_{partitionerDict[partitioner]}_LEAP.qasm')
-            return out
-    except:
-        raise FileNotFoundError(f'{save_path} does not exist.')
-"""

@@ -13,7 +13,7 @@ import time
 bench_path = 'benchmark_circuit_folders'
 
 
-def construct_dtc_unitary(num_qubits: int, num_circuits: int):
+def construct_dtc_unitary(num_qubits: int, num_circuits: int, save_path: str):
   """Generates a random Floquet unitary circuit with a random seed and random rotation from [1,9.9999].
   Creates a .qasm file for the circuit, containing the seed, x-rotation, and number of qubits. 
   Parameters:
@@ -24,18 +24,18 @@ def construct_dtc_unitary(num_qubits: int, num_circuits: int):
     rand_seed = random.randint(10000, 99999)
     rand_float = rand_seed / 10000
     qc = dtc_unitary(num_qubits=num_qubits, g=rand_float, seed=rand_seed)
-    dump(qc, bench_path + '/qiskit/dtc/dtc_' + str(num_qubits) + "_" + str(rand_float) + '_' + str(rand_seed) + '.qasm')
+    dump(qc, save_path + '/dtc_' + str(num_qubits) + "_" + str(rand_float) + '_' + str(rand_seed) + '.qasm')
 
-def construct_multi_control_circuit(num_qubits: int):
+def construct_multi_control_circuit(num_qubits: int, save_path: str):
   """Generates a random circuit with X gates.
   Creates a .qasm file for the circuit, containing the number of qubits. 
   Parameters:
     num_qubits (int): Required. Number of qubits for the circuit.
   """
   qc = multi_control_circuit(num_qubits=num_qubits)
-  dump(qc, bench_path + '/qiskit/multi_control/multi_control_' + str(num_qubits) + '.qasm')
+  dump(qc, save_path + '/multi_control_' + str(num_qubits) + '.qasm')
     
-def construct_clifford_circuit(num_qubits: int, num_circuits: int):
+def construct_clifford_circuit(num_qubits: int, num_circuits: int, save_path: str):
   """Generates a random clifford circuit using a random seed.
   Creates a .qasm file for the circuit, containing the seed and number of qubits. 
   Parameters:
@@ -45,7 +45,7 @@ def construct_clifford_circuit(num_qubits: int, num_circuits: int):
   for i in range(num_circuits):
     rand_seed = random.randint(10000, 99999)
     qc = random_clifford_circuit(num_qubits=num_qubits, seed=rand_seed)
-    dump(qc, bench_path + '/qiskit/clifford/clifford_' + str(num_qubits) + '_' + str(rand_seed) + '.qasm')
+    dump(qc, save_path + '/clifford_' + str(num_qubits) + '_' + str(rand_seed) + '.qasm')
  # circuit = QuantumCircuit.from_qasm_file()
 
       
