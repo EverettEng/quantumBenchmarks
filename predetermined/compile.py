@@ -5,8 +5,28 @@ from pathlib import Path
 
 def predeterminedCompilation(qc: str, save_path: str = None, success_threshold: float = 1e-8, replace_filter: str = 'less-than-multi', 
     partitioner: int = 0, json_path: str = None):
+    
     """
-        Helper function. Do not call. Saves compiled circuits and JSON to respective directories.
+    Optimizes a function using QSearch, Leap, and Qiskit transpilation with optimization level 3.
+
+    Parameters:
+        qc (str): Quantum circuit to be optimized. Path directory to QASM file.
+        
+        save_path (str): Path to save quantum circuits to. (Default: None)
+        
+        success_threshold (float): The distance threshold that determines successful termintation. (Default: 1e-8)
+        
+        replace_filter (str): A predicate that determines if the resulting circuit, after calling loop_body on a block, 
+        should replace the original operation. (Default: 'always'). Supports 'less-than', 'always', and 'less-than-multi'.
+
+        partitioner (int): Partitions circuit into blocks of 3 qubits. Supports ScanPartitioner and QuickPartitioner. 0 for
+        ScanPartitioner and 1 for QuickPartitioner. (Default: 0).
+
+        json_path (str): Path to save JSON file containing informdation about the circuit.
+
+    Returns:
+        If one circuit is compiled, returns a list of dictionaries containing information about the optimization process. If multiple
+        circuits are compiled, returns a list of lists of dictionaries containing information about the optimiztaion process.
     """
 
     if qc.endswith('.qasm'):

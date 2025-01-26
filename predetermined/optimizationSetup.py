@@ -28,27 +28,10 @@ data = []
 optimizationLevel = 3
 
 def optimizations(qc: str, replace_filter: str = 'always', save_path: str = None, success_threshold: float = 1e-8, partitioner: int = 0):
-
     """
-    Optimizes a function using QSearch, Leap, and Qiskit transpilation with optimization level 3.
-
-    Parameters:
-        qc (str): Quantum circuit to be optimized. Path directory to QASM file.
-        
-        replace_filter (str): A predicate that determines if the resulting circuit, after calling loop_body on a block, 
-        should replace the original operation. (Default: 'always'). Supports 'less-than', 'always', and 'less-than-multi'.
-
-        save_path (str): Path to save quantum circuits to. (Default: None)
-
-        success_threshold (float): The distance threshold that determines successful termintation. (Default: 1e-8).
-
-        partitioner (int): Partitions circuit into blocks of 3 qubits. Supports ScanPartitioner and QuickPartitioner. 0 for
-        ScanPartitioner and 1 for QuickPartitioner. (Default: 0).
-
-
-    Returns:
-        Optimized circuit saved to the save_path (if one exists) and a dictionary containing information about the optimization process.
+        Helper function. Does the actual compilation
     """
+    
     
     # Stores these variables for the helper functions to use 
     partitionerType = partitioner
