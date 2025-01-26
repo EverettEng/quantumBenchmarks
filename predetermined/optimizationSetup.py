@@ -8,6 +8,7 @@ from qiskit.compiler import transpile
 from qiskit import QuantumCircuit
 import time
 from qiskit.qasm2 import dump
+from bqskit_compile.partitioner import countNumGates
 
 compiled_circuits = []
 compiled_circuits_times = []
@@ -21,17 +22,41 @@ passDict = {
     0: 'QSearch',
     1: 'LEAP'
 }
-replaceFilterType = 0
-success_threshold_num = 0
+replaceFilterType = 'less-than-multi'
+success_threshold_num = 1e-8
 data = []
+optimizationLevel = 3
 
-def optimizations(qc: str, save_path: str = None, success_threshold: float = 1e-8, replace_filter: str = 'less-than-multi', 
-    partitioner: int = 0):
+def optimizations(qc: str, replace_filter: str = 'always', save_path: str = None, success_threshold: float = 1e-8, partitioner: int = 0):
 
+    """
+    Optimizes a function using QSearch, Leap, and Qiskit transpilation with optimization level 3.
+
+    Parameters:
+        qc (str): Quantum circuit to be optimized. Path directory to QASM file.
+        
+        replace_filter (str): A predicate that determines if the resulting circuit, after calling loop_body on a block, 
+        should replace the original operation. (Default: 'always'). Supports 'less-than', 'always', and 'less-than-multi'.
+
+        save_path (str): Path to save quantum circuits to. (Default: None)
+
+        success_threshold (float): The distance threshold that determines successful termintation. (Default: 1e-8).
+
+        partitioner (int): Partitions circuit into blocks of 3 qubits. Supports ScanPartitioner and QuickPartitioner. 0 for
+        ScanPartitioner and 1 for QuickPartitioner. (Default: 0).
+
+
+    Returns:
+        Optimized circuit saved to the save_path (if one exists) and a dictionary containing information about the optimization process.
+    """
+    
+    # Stores these variables for the helper functions to use 
     partitionerType = partitioner
     replaceFilterType = replace_filter
     success_threshold_num = success_threshold
-
+    
+    # Compiles the circuit using both Leap and Qsearch, calculates the time taken to compile, and appends
+    # a list of data to compiled_circuits[] for analysis. Also appends the optimization time to compiled_circuits_times
     for i in range(2):
         startTime = time.time()
         compiled_circuit = presetPartitions(qc=qc, 
@@ -47,7 +72,7 @@ def optimizations(qc: str, save_path: str = None, success_threshold: float = 1e-
     qiskit_circuit = QuantumCircuit.from_qasm_file(qc)
 
     startTime = time.time()
-    compiled_circuit = transpile(qiskit_circuit, optimization_level=3)
+    compiled_circuit = transpile(qiskit_circuit, optimization_level=optimizationLevel)
     endTime = time.time()
 
     index = qc.rfind('/')
@@ -66,13 +91,15 @@ def optimizations(qc: str, save_path: str = None, success_threshold: float = 1e-
 
 
 def presetBqskitOptimizationAnalysis(qc: str):
-
+    """
+        Helper function. Do not call.
+    """
     for i in range(2):
         quantumCircuit = Circuit.from_file(qc)
 
         original_two_q_gates = 0
         compiled_two_q_gates = 0
-
+        
         circuiti = compiled_circuits[i][0]
 
         # Number of 2-qubit gates before compilation
@@ -98,7 +125,7 @@ def presetBqskitOptimizationAnalysis(qc: str):
         quantumCircuit_name = qc[index+1:len(qc)-5]
 
         # Circuit name after optimization 
-        circuit_name = compiled_circuits[i][1]
+        circuit_name = compiled_circuits[i][1].replace('.qasm', '')
 
         # Number of qubits in the circuit 
         qc_qubit_count = circuiti.num_qudits
@@ -117,16 +144,19 @@ def presetBqskitOptimizationAnalysis(qc: str):
         for k in range(len(gates)- 1):
             after_qc_gate_set += str(gates[k]) + ', '
         after_qc_gate_set += ' ' + str(gates[len(gates)-1])
+        
 
         infoDict = {
-        'Circuit QASM Name Before Optimization': quantumCircuit_name,
-        'Circuit QASM Name After Optimization': circuit_name,
+        'Circuit QASM File Name Before Optimization': quantumCircuit_name,
+        'Circuit QASM File Name After Optimization': circuit_name,
         'Circuit Qubit Count': qc_qubit_count,
         'Compilation Time (seconds)': compiled_circuits_times[i],
         'Two-Qubit Gate Count Before Optimization': original_two_q_gates,
         'Two-Qubit Gate Count After Optimization': compiled_two_q_gates,
         'Two-Qubit Gate Depth Before Optimzation': original_two_q_depth,
         'Two-Qubit Gate Depth After Optimzation': compiled_two_q_depth,
+        'Gate Count Before Optimization': countNumGates(quantumCircuit),
+        'Gate Count After Optimization': countNumGates(compiled_circuits[i][0]),
         'Gate Set Before Optimization': before_qc_gate_set,
         'Gate Set After Optimization': after_qc_gate_set,
         'Partitioner': partitionerDict[partitionerType],
@@ -134,14 +164,21 @@ def presetBqskitOptimizationAnalysis(qc: str):
         'Optimization Algorithm Success Threshold': success_threshold_num,
         'Optimization Algorithm Replace Filter': replaceFilterType,
         'Partitioner Block Size': blockSize,
-        'Multistart value': '2^3',
+        'Multistart Balue': '2^3',
+        'Average Number of Gates in Each Partition Before Optimization': compiled_circuits[i][2],
+        'Average Number of Gates in Each Partition After Optimization': compiled_circuits[i][3],
+        'Average Number of Two-Qubit Gates in Each Partition Before Optimization': compiled_circuits[i][4],
+        'Average Number of Two-Qubit Gates in Each Partition After Optimization': compiled_circuits[i][5],
+        'Optimization Level': None,
         'Framework': 'BQSkit'
         }
         
         data.append(infoDict)
 
-def presetQiskitOptimizationAnalysis(qc):
-    
+def presetQiskitOptimizationAnalysis(qc: str):
+    """
+        Helper function. Do not call.
+    """
     # original circuit
     quantumCircuit = QuantumCircuit.from_qasm_file(qc)
 
@@ -175,6 +212,7 @@ def presetQiskitOptimizationAnalysis(qc):
 
     # Circuit name after optimization 
     circuit_name = compiled_circuits[2][1]
+    
 
     # Number of qubits in the circuit 
     qc_qubit_count = circuit.num_qubits
@@ -195,8 +233,8 @@ def presetQiskitOptimizationAnalysis(qc):
     after_qc_gate_set += gates[len(gates)-1]
 
     infoDict = {
-        'Circuit QASM Name Before Optimization': quantumCircuit_name,
-        'Circuit QASM Name After Optimization': circuit_name,
+        'Circuit QASM File Name Before Optimization': quantumCircuit_name,
+        'Circuit QASM File Name After Optimization': circuit_name,
         'Circuit Qubit Count': qc_qubit_count,
         'Compilation Time (seconds)': compiled_circuits_times[2],
         'Two-Qubit Gate Count Before Optimization': original_two_q_gates,
@@ -205,6 +243,17 @@ def presetQiskitOptimizationAnalysis(qc):
         'Two-Qubit Gate Depth After Optimzation': compiled_two_q_depth,
         'Gate Set Before Optimization': before_qc_gate_set,
         'Gate Set After Optimization': after_qc_gate_set,
+        'Partitioner': None,
+        'Optimization Algorithm': None,
+        'Optimization Algorithm Success Threshold': None,
+        'Optimization Algorithm Replace Filter': None,
+        'Partitioner Block Size': None,
+        'Multistart value': None,
+        'Average Number of Gates in Each Partition Before Optimization': None,
+        'Average Number of Gates in Each Partition After Optimization': None,
+        'Average Number of Two-Qubit Gates in Each Partition Before Optimization': None,
+        'Average Number of Two-Qubit Gates in Each Partition After Optimization': None,
+        'Optimization Level': optimizationLevel,
         'Framework': 'Qiskit'
         }
         

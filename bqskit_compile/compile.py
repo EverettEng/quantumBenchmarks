@@ -3,7 +3,7 @@ import json
 import os 
 
 
-def optimizeBQSkit(qc: str, circuit_save_path: str, json_path: str = None, success_threshold: float = 1e-8, replace_filter: str = 'less-than-multi', 
+def optimizeBQSkit(qc: str,  save_path: str = None, replace_filter: str = 'always', json_path: str = None, success_threshold: float = 1e-8, 
     partitioner: int = 0, pass_type: int = 0):
     """
     Optimize circuit(s) using BQSkit. Can optimize individual files as well as directories of QASM files.
@@ -11,14 +11,14 @@ def optimizeBQSkit(qc: str, circuit_save_path: str, json_path: str = None, succe
     Parameters:
         qc (str): Quantum circuit to be optimized. Path to either a QASM file or folder.
 
-        circuit_save_path (str): Path to save the optimized quantum circuit in.
+        save_path (str): Path to save the optimized quantum circuit in.
 
+        replace_filter (str): A predicate that determines if the resulting circuit, after calling loop_body on a block, 
+        should replace the original operation. (Default: always). Currently support for 'less-than', 'always', and 'less-than-multi'.
+        
         json_path (str): Path to save JSON file containing informdation about the circuit.
 
         success_threshold (float): The distance threshold that determines successful termintation. (Default: 1e-8).
-
-        replace_filter (str): A predicate that determines if the resulting circuit, after calling loop_body on a block, 
-        should replace the original operation. (Default: less-than-multi).
 
         partitioner (int): Partitions circuit into blocks of 3 qubits. Supports ScanPartitioner and QuickPartitioner. 0 for
         ScanPartitioner and 1 for QuickPartitioner. (Default: 0).
@@ -39,32 +39,33 @@ def optimizeBQSkit(qc: str, circuit_save_path: str, json_path: str = None, succe
         return False
 
     # Checks if path is a QASM file and the save directory is valid
-    if os.path.isfile(path=qc) and qc.endswith('.qasm') and os.path.isdir(circuit_save_path):
+    if os.path.isfile(path=qc) and qc.endswith('.qasm') and os.path.isdir(save_path):
         
         # Checks to see if JSON input is correct
         if validJSONInput():
             # Calls optimization function and stores the dictionary returned into a variable
             infoDict = optimizeBQSkitFromFile(qc=qc,
-                                circuit_save_path=circuit_save_path,
+                                save_path=save_path,
                                 success_threshold=success_threshold, 
                                 partitioner=partitioner, 
                                 pass_type=pass_type,
                                 replace_filter=replace_filter)
             
-            # Checks if the path is a valid directory 
+            # Checks if the json save path is a valid directory 
             if os.path.isdir(json_path):
 
                 # Gets the name of the file inputted wihtout the qasm or path
                 index = qc.rfind('/')
-                qc_name = qc[index+1]
+                qc_name = qc[index+1:len(qc)-5]
 
                 # Saves file as a json 
                 file_name = f'{json_path}/{qc_name}_optimized.json'
                 with open(file_name, 'w') as json_file:
                     json.dump(infoDict, json_file)
+            # If json_path equals None, returns the dictionary instead
             else:
                 return infoDict
-
+        # Raises exception if the json save path is invalid
         elif not validJSONInput():
             raise FileNotFoundError(f'The path {json_path} does not exist.')
 
@@ -74,28 +75,33 @@ def optimizeBQSkit(qc: str, circuit_save_path: str, json_path: str = None, succe
         if validJSONInput():
             # Calls optimization function
             infoDict = optimizeBQSkitFromDirectory(qc=qc, 
-                                        circuit_save_path=circuit_save_path,
+                                        save_path=save_path,
                                         success_threshold=success_threshold, 
                                         partitioner=partitioner, 
                                         pass_type=pass_type,
                                         replace_filter=replace_filter)
+            # Checks if the json save path is a valid directory 
             if os.path.isdir(s=json_path):
 
-                # Gets the name of the file inputted wihtout the qasm or path
+                # Gets the name of the directory inputted wihtout the path
                 index = qc.rfind('/')
-                qc_name = qc[index+1]
+                qc_name = qc[index+1:]
 
                 # Saves file as a json 
                 file_name = f'{json_path}/{qc_name}_optimized.json'
                 with open(file_name, 'w') as json_file:
                     json.dump(infoDict, json_file)
+            # If json_path equals None, returns the dictionary instead
             else:
                 return infoDict
+        # Raises exception if the json save path is invalid
         elif not validJSONInput():
             raise FileNotFoundError(f'The path {json_path} does not exist.')
     # Raise exception if path does not exist
     elif not os.path.exists(path=qc):
         raise FileNotFoundError(f'The path {qc} does not exist.')
-    elif isinstance(circuit_save_path,str) and os.path.isdir(s=circuit_save_path):
-        raise FileNotFoundError(f'The path {circuit_save_path} is invalid.')
+    
+    # Checks if save path is a string and if the directory is invalid
+    elif isinstance(save_path,str) and not os.path.isdir(s=save_path):
+        raise FileNotFoundError(f'The path {save_path} is invalid.')
     

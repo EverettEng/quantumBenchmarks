@@ -4,7 +4,7 @@ from pathlib import Path
 from bqskit.ir import Circuit
 import json
 
-def optimizeBQSkitFromFile(qc: str, circuit_save_path: str, success_threshold: float = 1e-8, replace_filter: str = 'less-than-multi', 
+def optimizeBQSkitFromFile(qc: str, replace_filter: str = 'always', save_path: str = None, success_threshold: float = 1e-8, 
     partitioner: int = 0, pass_type: int = 0):
     """
     Optimize a circuit using BQSkit from a QASM file 
@@ -20,7 +20,7 @@ def optimizeBQSkitFromFile(qc: str, circuit_save_path: str, success_threshold: f
         success_threshold (float): The distance threshold that determines successful termintation. (Default: 1e-8).
 
         replace_filter (str): A predicate that determines if the resulting circuit, after calling loop_body on a block, 
-        should replace the original operation. (Default: less-than-multi).
+        should replace the original operation. (Default: 'always'). Support for 'less-than', 'always', and 'less-than-multi'. 
 
         partitioner (int): Partitions circuit into blocks of 3 qubits. Supports ScanPartitioner and QuickPartitioner. 0 for
         ScanPartitioner and 1 for QuickPartitioner. (Default: 0).
@@ -33,7 +33,7 @@ def optimizeBQSkitFromFile(qc: str, circuit_save_path: str, success_threshold: f
     """
 
     infoDict = optimizationAnalysis(qc=qc, 
-                   save_path=circuit_save_path, 
+                   save_path=save_path, 
                    success_threshold=success_threshold, 
                    partitioner=partitioner, 
                    pass_type=pass_type,
@@ -43,7 +43,7 @@ def optimizeBQSkitFromFile(qc: str, circuit_save_path: str, success_threshold: f
 
     return circuit_list
 
-def optimizeBQSkitFromDirectory(qc: str, circuit_save_path: str, success_threshold: float = 1e-8, replace_filter: str = 'less-than-multi', 
+def optimizeBQSkitFromDirectory(qc: str, replace_filter: str = 'always', save_path: str = None, success_threshold: float = 1e-8, 
     partitioner: int = 0, pass_type: int = 0):
     """
     Optimize a circuit using BQSkit from a QASM file.
@@ -59,7 +59,7 @@ def optimizeBQSkitFromDirectory(qc: str, circuit_save_path: str, success_thresho
         success_threshold (float): The distance threshold that determines successful termintation. (Default: 1e-8).
 
         replace_filter (str): A predicate that determines if the resulting circuit, after calling loop_body on a block, 
-        should replace the original operation. (Default: less-than-multi).
+        should replace the original operation. (Default: 'always'). Support for 'less-than', 'always', and 'less-than-multi'. 
 
         partitioner (int): Partitions circuit into blocks of 3 qubits. Supports ScanPartitioner and QuickPartitioner. 0 for
         ScanPartitioner and 1 for QuickPartitioner. (Default: 0).
@@ -86,7 +86,7 @@ def optimizeBQSkitFromDirectory(qc: str, circuit_save_path: str, success_thresho
                            success_threshold=success_threshold,
                            partitioner=partitioner, 
                            pass_type=pass_type, 
-                           save_path=circuit_save_path,
+                           save_path=save_path,
                            replace_filter=replace_filter)
             
             # Adds the infoDict to the list of circuits 

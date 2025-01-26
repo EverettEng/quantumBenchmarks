@@ -9,7 +9,7 @@ from bqskit.passes import (
 from bqskit.compiler import Compiler
 from bqskit.ir import Circuit
 import time
-from bqskit_compile.partitioner import analyzePartitions
+from bqskit_compile.partitioner import analyzePartitions, countNumGates, countTwoQGates
 
 # NEED TO TRY CATCH FOR JSON SAVING.
 
@@ -26,20 +26,20 @@ passDict = {
 partitionerList = [ScanPartitioner(block_size=blockSize), QuickPartitioner(block_size=blockSize)]
 
 
-def optimizationAnalysis(qc: str, save_path: str = None, success_threshold: float = 1e-8, replace_filter: str = 'less-than-multi', 
+def optimizationAnalysis(qc: str, replace_filter: str = 'always', save_path: str = None, success_threshold: float = 1e-8, 
     partitioner: int = 0, pass_type: int = 0):
     """
     Optimizes a function using either LEAP or QSearch and returns the optimized circuit.
 
     Parameters:
         qc (str): Quantum circuit to be optimized. Path directory to QASM file.
+        
+        replace_filter (str): A predicate that determines if the resulting circuit, after calling loop_body on a block, 
+        should replace the original operation. (Default: 'always'). Supports 'less-than', 'always', and 'less-than-multi'.
 
         save_path (str): Path to save quantum circuits to. (Default: None)
 
         success_threshold (float): The distance threshold that determines successful termintation. (Default: 1e-8).
-
-        replace_filter (str): A predicate that determines if the resulting circuit, after calling loop_body on a block, 
-        should replace the original operation. (Default: less-than-multi).
 
         partitioner (int): Partitions circuit into blocks of 3 qubits. Supports ScanPartitioner and QuickPartitioner. 0 for
         ScanPartitioner and 1 for QuickPartitioner. (Default: 0).
@@ -47,7 +47,7 @@ def optimizationAnalysis(qc: str, save_path: str = None, success_threshold: floa
         pass_type (int): Optimization algorithm to use. Supports QSearch and LEAP. 0 for QSearch, 1 for LEAP. (Default: 0).
 
     Returns:
-        Optimized circuit saved to the save_path and a dictionary containing information about the optimization process.
+        Optimized circuit saved to the save_path (if one exists) and a dictionary containing information about the optimization process.
     """
 
     #try to construct circuit for pre-optimization evaluation
@@ -119,24 +119,32 @@ def optimizationAnalysis(qc: str, save_path: str = None, success_threshold: floa
     for j in range(len(gates)- 1):
         after_qc_gate_set += str(gates[j]) + ', '
     after_qc_gate_set += ' ' + str(gates[len(gates)-1])
-
-
+    
     infoDict = {
-        'Circuit QASM Name Before Optimization': quantumCircuit_name,
-        'Circuit QASM Name After Optimization': circuit_name,
+        'Circuit QASM File Name Before Optimization': quantumCircuit_name,
+        'Circuit QASM File Name After Optimization': circuit_name,
         'Circuit Qubit Count': qc_qubit_count,
         'Compilation Time (seconds)': elapsedTime,
         'Two-Qubit Gate Count Before Optimization': original_two_q_gates,
         'Two-Qubit Gate Count After Optimization': compiled_two_q_gates,
         'Two-Qubit Gate Depth Before Optimzation': original_two_q_depth,
         'Two-Qubit Gate Depth After Optimzation': compiled_two_q_depth,
+        'Gate Count Before Optimization': countNumGates(quantumCircuit),
+        'Gate Count After Optimization': countNumGates(circuit),
         'Gate Set Before Optimization': before_qc_gate_set,
         'Gate Set After Optimization': after_qc_gate_set,
         'Partitioner': partitionerDict[partitioner],
         'Optimization Algorithm': passDict[pass_type],
         'Optimization Algorithm Success Threshold': success_threshold,
         'Optimization Algorithm Replace Filter': replace_filter,
-        'Partitioner Block Size': blockSize
+        'Partitioner Block Size': blockSize,
+        'Multistart Balue': '2^3',
+        'Average Number of Gates in Each Partition Before Optimization': data[2],
+        'Average Number of Gates in Each Partition After Optimization':data[3],
+        'Average Number of Two-Qubit Gates in Each Partition Before Optimization': data[4],
+        'Average Number of Two-Qubit Gates in Each Partition After Optimization': data[5],
+        'Optimization Level': None,
+        'Framework': 'BQSkit'
         }
         
     return infoDict 

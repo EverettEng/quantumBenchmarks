@@ -5,6 +5,9 @@ from pathlib import Path
 
 def predeterminedCompilation(qc: str, save_path: str = None, success_threshold: float = 1e-8, replace_filter: str = 'less-than-multi', 
     partitioner: int = 0, json_path: str = None):
+    """
+        Helper function. Do not call. Saves compiled circuits and JSON to respective directories.
+    """
 
     if qc.endswith('.qasm'):
         circuitData = optimizations(qc=qc,
@@ -36,7 +39,7 @@ def predeterminedCompilation(qc: str, save_path: str = None, success_threshold: 
                  circuitsData.append(circuitData)
         if isinstance(json_path,str) and os.path.isdir(json_path):
             index = qc.rfind('/')
-            qc_name = qc[index+1]
+            qc_name = qc[index+1:]
 
             # Saves file as a json 
             file_name = f'{json_path}/{qc_name}_optimized.json'
@@ -45,4 +48,5 @@ def predeterminedCompilation(qc: str, save_path: str = None, success_threshold: 
         else:
             return circuitsData
     else:
-        raise Exception('Some parameter is wrong.')
+        if not save_path == None:
+            raise Exception('Some parameter is wrong.')
