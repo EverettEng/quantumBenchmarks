@@ -9,7 +9,7 @@ import random
 from bqskit import compile 
 import os
 
-def construct_bqskit_QV(num_qubits: int, depth: int, num_circuits: int, save_path: str = None):
+def construct_bqskit_QV(num_qubits: int, depth: int, num_circuits: int = 1, save_path: str = None):
     """Generate random QV circuit(s). If a save path is inputted, creates a .qasm file for the circuit, containing the number of reps and number of qubits. 
     
     Parameters:
@@ -19,7 +19,8 @@ def construct_bqskit_QV(num_qubits: int, depth: int, num_circuits: int, save_pat
         save_path (str): Path to save the quantum circuit(s) to. (Default: None)
         
     Returns:
-        List of random QV Circuit(s) num_circuits long.
+        If num_circuits is more than 1, returns a list of random QV Circuits num_circuits long. 
+        Otherwise, returns a list containing a random QV Circuit and its name.
     """
     
     qc_list = []
@@ -29,8 +30,11 @@ def construct_bqskit_QV(num_qubits: int, depth: int, num_circuits: int, save_pat
         qc = compile(qc)
         if isinstance(save_path, str) and os.path.isdir(save_path):
             qc.save(f'{save_path}/qv_{str(num_qubits)}_{str(depth)}_{str(rand_seed)}.qasm')
-        qc_list.append(qc)
-    return qc_list
+        qc_list.append([qc, f'qv_{str(num_qubits)}_{str(depth)}_{str(rand_seed)}.qasm'])
+    if num_circuits > 1:
+        return qc_list
+    else:
+        return qc_list[0]
     
 def construct_bqskit_circSU2(num_qubits: int, num_reps: int, save_path: str = None):
     """Generates an efficient SU2 circuit with circular entanglement and using Ry and Rz 1Q-gates.
@@ -42,11 +46,12 @@ def construct_bqskit_circSU2(num_qubits: int, num_reps: int, save_path: str = No
         save_path (str): Path to save the quantum circuit(s) to. (Default: None)
     
     Returns:
-        Constructed SU2 Circuit. 
+        A list containing the constructed SU2 Circuit and its name. 
     """
     qc = bqskit_circSU2(width=num_qubits, num_reps=num_reps)
-    qc.save(f'{save_path}/su2_{str(num_qubits)}_{str(num_reps)}.qasm')
-    return qc
+    if isinstance(save_path,str) and os.path.isdir(save_path):
+        qc.save(f'{save_path}/su2_{str(num_qubits)}_{str(num_reps)}.qasm')
+    return [qc, f'su2_{str(num_qubits)}_{str(num_reps)}.qasm']
 
 def construct_bqskit_dtc_unitary(num_qubits: int, num_circuits: int = 1, save_path: str = None):
     """Generates a random Floquet unitary circuit with a random seed and random rotation from [1,9.9999].
@@ -58,7 +63,8 @@ def construct_bqskit_dtc_unitary(num_qubits: int, num_circuits: int = 1, save_pa
         save_path (str): Path to save the quantum circuit(s) to. (Default: None)
         
     Returns: 
-        List of random QV Circuit(s) num_circuits long.
+        If num_circuits is more than 1, returns a list of random DTC Circuits num_circuits long. 
+        Otherwise, returns list containing a random DTC Circuit and its name.
     """
     
     qc_list = []
@@ -66,16 +72,30 @@ def construct_bqskit_dtc_unitary(num_qubits: int, num_circuits: int = 1, save_pa
         rand_seed = random.randint(10000, 99999)
         rand_float = rand_seed / 10000
         qc = dtc_unitary(num_qubits=num_qubits, g=rand_float, seed=rand_seed)
-        if isinstance(qc, str) and os.path.isdir(qc):
+        if isinstance(save_path, str) and os.path.isdir(save_path):
             qc.save(f'{save_path}/dtc_{str(num_qubits)}_{str(rand_float)}_{str(rand_seed)}.qasm')
-        qc_list.append(qc)
-    return qc_list
+        qc_list.append([qc, f'dtc_{str(num_qubits)}_{str(rand_float)}_{str(rand_seed)}.qasm'])
+    if num_circuits > 1:
+        return qc_list
+    else:
+        return qc_list[0]
 
 
 def construct_bqskit_multi_control_circuit(num_qubits: int, save_path: str = None):
+    """Generates a multi control circuit with num_qubits.
+    
+    Parameters:
+        num_qubits (int): Required. Number of qubits for the circuit.
+        save_path (str): Path to save the quantum circuit(s) to. (Default: None)
+        
+    Returns: 
+        List containing a multi control circuit with num_qubits and its name.
+    """
     qc = multi_control_circuit(num_qubits=num_qubits)
-    qc.unfold_all() # pickle
-    qc.save(f'{save_path}/multi_control_{str(num_qubits)}.qasm')
+    qc.unfold_all()
+    if isinstance(save_path,str) and os.path.isdir(save_path):
+        qc.save(f'{save_path}/multi_control_{str(num_qubits)}.qasm')
+    return [qc, f'multi_control_{str(num_qubits)}.qasm']
 
 def construct_bqskit_random_clifford(num_qubits: int, num_circuits: int = 1, save_path: str = None):
     """Generates a random Floquet unitary circuit with a random seed and random rotation from [1,9.9999].
@@ -83,19 +103,23 @@ def construct_bqskit_random_clifford(num_qubits: int, num_circuits: int = 1, sav
     
     Parameters:
         num_qubits (int): Required. Number of qubits for the circuit.
-        num_circuits (int): Required. Number of circuits to generate. 
+        num_circuits (int): Number of circuits to generate. (Default: 1)
         save_path (str): Path to save the quantum circuit(s) to. (Default: None)
         
     Returns:
-        List of random Clifford Circuit(s) num_circuits long.
+        If num_circuits is more than 1, returns a list of random Clifford Circuits num_circuits long. 
+        Otherwise, returns list containing a random Clifford Circuit and its name.
     """
     
     qc_list = []
     for i in range(num_circuits):
         rand_seed = random.randint(10000, 99999)
         qc = bqskit_random_clifford(num_qubits=num_qubits, seed=rand_seed)
-        if isinstance(qc,str) and os.path.isdir(qc):
+        if isinstance(save_path,str) and os.path.isdir(save_path):
             qc.save(f'{save_path}/clifford_{str(num_qubits)}_{str(rand_seed)}.qasm')
-        qc_list.append(qc)
-    return qc_list
+        qc_list.append([qc, f'clifford_{str(num_qubits)}_{str(rand_seed)}.qasm'])
+    if num_circuits > 1:
+        return qc_list
+    else:
+        return qc_list[0]
         

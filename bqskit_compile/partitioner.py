@@ -1,7 +1,9 @@
 from bqskit.compiler import Compiler
-from bqskit.ir import Circuit
+from bqskit.ir import Circuit, Gate
 from bqskit.passes import QSearchSynthesisPass, QuickPartitioner, UnfoldPass, LEAPSynthesisPass, ScanPartitioner
 import os
+from bqskit.ir.gates import MeasurementPlaceholder, BarrierPlaceholder
+import time
 
 blockSize = 3
 partitionerDict = {
@@ -66,6 +68,8 @@ def analyzePartitions(qc: str, pass_type: int, partitioner: int, success_thresho
 
     # Unfolds all gates
     circuit.unfold_all()
+    circuit.remove_all_measurements()
+    circuit.remove_all(BarrierPlaceholder)
 
     # Compiles using the partitioner selected
     out = compiler.compile(circuit, partitioners[partitioner])
@@ -146,29 +150,33 @@ def analyzePartitions(qc: str, pass_type: int, partitioner: int, success_thresho
     final_circuit.unfold_all() # unfold any circuit gates
 
     compiler.close()
-
+    # Start time of the stuff after compilation
+    sTime = time.time()
     # get the name of the QASM file without the .qasm
     index = qc.rfind('/')
     file_name = qc[index+1:len(qc)-5]
 
     # Save circuit
-
     if isinstance(save_path,str):
         final_circuit.save(f'{save_path}/{file_name}_{success_threshold}_{partitionerDict[partitioner]}_{passDict[pass_type]}.qasm')
-
+        
+    # End time of the stuff after compilation
+    eTime = time.time()
+    
     # Return optimized circuit, the name of the circuit, the number of gates in each partition before optimization, the number of gates
-    # in each partition after optimization, the number of 2-qubit gates in each partition before optimization, and the number of two-qubit
-    # gates in each partition after optimization
+    # in each partition after optimization, the number of 2-qubit gates in each partition before optimization, the extra time taken
+    # to save the circuit and the number of two-qubit gates in each partition after optimization.
     return [final_circuit, 
             f'{file_name}_{success_threshold}_{partitionerDict[partitioner]}_{passDict[pass_type]}.qasm', 
             sum(numGatesBeforeOptimization)/len(numGatesBeforeOptimization),
             sum(numGatesAfterOptimization)/len(numGatesAfterOptimization),
             sum(numTwoQGatesBeforeOptimizatoon)/len(numTwoQGatesBeforeOptimizatoon),
-            sum(numTwoQGatesAfterOptimization)/len(numTwoQGatesAfterOptimization)]
+            sum(numTwoQGatesAfterOptimization)/len(numTwoQGatesAfterOptimization),
+            eTime-sTime]
 
-def presetPartitions(qc: str, pass_type: int, partitioner: int, success_threshold: float, save_path: str, replace_filter: str):
+def presetPartitions(qc: str|Circuit, pass_type: int, partitioner: int, success_threshold: float, save_path: str, replace_filter: str, circuit_name: str):
     """
-    Replicates ForEachBlockPass with  preset partitions
+    Replicates ForEachBlockPass with preset partitions
 
     Parameters:
         qc (str): Quantum circuit to be optimized. Path directory to QASM file.
@@ -197,10 +205,14 @@ def presetPartitions(qc: str, pass_type: int, partitioner: int, success_threshol
 
     # Instantiate compiler and get the file
     compiler = Compiler()
-    circuit = Circuit.from_file(filename=qc)
+    if isinstance(qc,str):
+        circuit = Circuit.from_file(filename=qc)
+    else:
+        circuit = qc
 
     # Unfolds all gates
     circuit.unfold_all()
+    circuit.remove_all_measurements()
 
     # Compiles using the partitioner selected
     out = compiler.compile(circuit, partitioners[partitioner])
@@ -282,22 +294,30 @@ def presetPartitions(qc: str, pass_type: int, partitioner: int, success_threshol
     final_circuit.unfold_all() # unfold any circuit gates
 
     compiler.close()
-
+    # Start time of the stuff after compilation
+    sTime = time.time()
+    
     # get the name of the QASM file without the .qasm
-    index = qc.rfind('/')
-    file_name = qc[index+1:len(qc)-5]
+    if isinstance(qc, str):
+        index = qc.rfind('/')
+        file_name = qc[index+1:len(qc)-5]
+    else:
+        file_name = circuit_name
     
     # Save circuit
 
     if isinstance(save_path,str) and os.path.isdir(save_path):
         final_circuit.save(f'{save_path}/{file_name}_{success_threshold}_{partitionerDict[partitioner]}_{passDict[pass_type]}.qasm')
 
+    # End time of the stuff after Compilation
+    eTime = time.time()
     # Return optimized circuit, the name of the circuit, the number of gates in each partition before optimization, the number of gates
-    # in each partition after optimization, the number of 2-qubit gates in each partition before optimization, and the number of two-qubit
-    # gates in each partition after optimization
+    # in each partition after optimization, the number of 2-qubit gates in each partition before optimization, the extra time taken
+    # to save the circuit and the number of two-qubit gates in each partition after optimization.
     return [final_circuit, 
             f'{file_name}_{success_threshold}_{partitionerDict[partitioner]}_{passDict[pass_type]}.qasm', 
             sum(numGatesBeforeOptimization)/len(numGatesBeforeOptimization),
             sum(numGatesAfterOptimization)/len(numGatesAfterOptimization),
             sum(numTwoQGatesBeforeOptimizatoon)/len(numTwoQGatesBeforeOptimizatoon),
-            sum(numTwoQGatesAfterOptimization)/len(numTwoQGatesAfterOptimization)]
+            sum(numTwoQGatesAfterOptimization)/len(numTwoQGatesAfterOptimization),
+            eTime-sTime]

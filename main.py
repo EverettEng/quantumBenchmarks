@@ -1,22 +1,20 @@
 from predetermined.compile import predeterminedCompilation
 from bqskit.ir import Circuit
+from construct_benchmarks.construct_bqskit_benchmarks import construct_bqskit_random_clifford
+from qiskit import QuantumCircuit
 
 if __name__ == '__main__':
    """
-   predeterminedCompilation(qc='benchmark_circuits/clifford_10_98001.qasm',
+   predeterminedCompilation(qc='benchmark_circuits/clifford_10_70813.qasm',
                             save_path='compiled_circuits',
                             json_path='compiled_circuits',
                             replace_filter='less-than-multi'
                             )
-   
-   qc = Circuit.from_file('benchmark_circuits/clifford_10_98001.qasm')
-   print(qc.gate_counts)
    """
+   # NEED TO TRY THE RANDOM CIRCUITS IDK IF IT WORKS
+
    
-   qc = '432432/fadsf/4324agga.qasm'
-   index = qc.rfind('/')
-   qc_name = qc[index+1:len(qc)-5]
-   print(qc_name)
+
 
     
     

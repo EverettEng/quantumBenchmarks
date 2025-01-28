@@ -7,7 +7,7 @@ from circuits.qiskit_circuits import (
 from qiskit.qasm2 import dump
 import os
 
-def construct_dtc_unitary(num_qubits: int, num_circuits: int = 1, save_path: str = None):
+def construct_qiskit_dtc_unitary(num_qubits: int, num_circuits: int = 1, save_path: str = None):
   """Generates a random Floquet unitary circuit with a random seed and random rotation from [1,9.9999].
   If a save path is inputted, creates a .qasm file for the circuit, containing the seed, x-rotation, and number of qubits.
   
@@ -17,7 +17,8 @@ def construct_dtc_unitary(num_qubits: int, num_circuits: int = 1, save_path: str
     save_path (str): Path to save the random circuit to. (Default: None)
     
   Returns:
-    List of random DTC QuantumCircuit(s) num_circuits long.
+    If num_circuits is more than 1, returns a list of random DTC QuantumCircuits num_circuits long. 
+    Otherwise, returns a list containing a random DTC QuantumCircuit and its name.
   """
   
   qc_list = []
@@ -27,11 +28,14 @@ def construct_dtc_unitary(num_qubits: int, num_circuits: int = 1, save_path: str
     qc = dtc_unitary(num_qubits=num_qubits, g=rand_float, seed=rand_seed)
     if isinstance(save_path,str) and os.path.isdir(save_path):
       dump(qc, save_path + '/dtc_' + str(num_qubits) + "_" + str(rand_float) + '_' + str(rand_seed) + '.qasm')
-    qc_list.append(qc)
-  return qc_list
+    qc_list.append([qc, 'dtc_' + str(num_qubits) + "_" + str(rand_float) + '_' + str(rand_seed) + '.qasm'])
+  if num_circuits > 1:
+    return qc_list
+  else:
+    return qc_list[0]
     
 
-def construct_multi_control_circuit(num_qubits: int, save_path: str = None):
+def construct_qiskit_multi_control_circuit(num_qubits: int, save_path: str = None):
   """Generates a random circuit with X gates.
   If a save path is inputted, creates a .qasm file for the circuit, containing the number of qubits. 
   
@@ -40,13 +44,14 @@ def construct_multi_control_circuit(num_qubits: int, save_path: str = None):
     save_path (str): Path to save the random circuit to. (Default: None)
     
   Returns:
-    Constructed multi-control QuantumCircuit.
+    A list containing a multi-control QuantumCircuit and its name.
   """
   qc = multi_control_circuit(num_qubits=num_qubits)
-  dump(qc, save_path + '/multi_control_' + str(num_qubits) + '.qasm')
-  return qc
+  if isinstance(save_path,str) and os.path.isdir(save_path):
+    dump(qc, save_path + '/multi_control_' + str(num_qubits) + '.qasm')
+  return [qc, 'multi_control_' + str(num_qubits) + '.qasm']
     
-def construct_clifford_circuit(num_qubits: int, num_circuits: int = 1, save_path: str = None):
+def construct_qiskit_clifford_circuit(num_qubits: int, num_circuits: int = 1, save_path: str = None):
   """Generates a random clifford circuit using a random seed.
   If a save path is inputted, creates a .qasm file for the circuit, containing the seed and number of qubits.
    
@@ -56,12 +61,17 @@ def construct_clifford_circuit(num_qubits: int, num_circuits: int = 1, save_path
     save_path (str): Path to save the random circuit to. (Default: None)
     
   Returns:
-    List of random Clifford QuantumCircuit(s) num_circuits long.
+    If num_circuits is more than 1, returns a list of random Clifford QuantumCircuits num_circuits long. 
+    Otherwise, returns a list containing a random Clifford QuantumCircuit and its name.
   """
   qc_list = []
   for i in range(num_circuits):
     rand_seed = random.randint(10000, 99999)
     qc = random_clifford_circuit(num_qubits=num_qubits, seed=rand_seed)
-    dump(qc, save_path + '/clifford_' + str(num_qubits) + '_' + str(rand_seed) + '.qasm')
-    qc_list.append(qc)
-  return qc_list
+    if isinstance(save_path,str) and os.path.isdir(save_path):
+      dump(qc, save_path + '/clifford_' + str(num_qubits) + '_' + str(rand_seed) + '.qasm')
+    qc_list.append([qc,'clifford_' + str(num_qubits) + '_' + str(rand_seed) + '.qasm' ])
+  if num_circuits > 1:
+    return qc_list
+  else:
+    return qc_list[0]
