@@ -28,7 +28,6 @@ success_threshold_num = 1e-8
 optimizationLevel = 3
 generated_circuit_name = ''
 qiskit_circuit_name = ''
-generate_circuit_condition = False
 
 def optimizations(qc: str|Circuit|QuantumCircuit|list, replace_filter: str = 'always', save_path: str = None, success_threshold: float = 1e-8, partitioner: int = 0, 
                   generate_circuit: bool = False, circuit_name: str = None):
@@ -40,10 +39,11 @@ def optimizations(qc: str|Circuit|QuantumCircuit|list, replace_filter: str = 'al
     compiled_circuits_times = []
     
     # Stores these variables for the helper functions to use 
+    global partitionerType, replaceFilterType, success_threshold_num, qiskit_circuit_name 
     partitionerType = partitioner
     replaceFilterType = replace_filter
     success_threshold_num = success_threshold
-    generate_circuit_condition = generate_circuit
+
     
     # Runs if qc is a string (path)
     if not generate_circuit:
@@ -297,7 +297,7 @@ def presetQiskitOptimizationAnalysis(qc: str|QuantumCircuit, data: list, compile
         quantumCircuit_name = generated_circuit_name[:len(generated_circuit_name)-5]
 
     # Circuit name after optimization 
-    circuit_name = compiled_circuits[2][1] 
+    circuit_name = compiled_circuits[2][1][:-5]
 
     # Number of qubits in the circuit 
     qc_qubit_count = circuit.num_qubits
@@ -349,7 +349,7 @@ def presetQiskitOptimizationAnalysis(qc: str|QuantumCircuit, data: list, compile
         'Average Number of Two-Qubit Gates in Each Partition Before Optimization': None,
         'Average Number of Two-Qubit Gates in Each Partition After Optimization': None,
         'Optimization Level': optimizationLevel,
-        'Randomly Generated Circuit': generate_circuit_condition,
+        'Randomly Generated Circuit': False if isinstance(qc,str) else True,
         'Framework': 'Qiskit'
         }
         

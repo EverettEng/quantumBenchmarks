@@ -8,13 +8,13 @@ from pandas import json_normalize
 import json
 
 if __name__ == '__main__':
-   """
+   
    predeterminedCompilation(qc='benchmark_circuits',
                             save_path='compiled_circuits',
                             json_path='compiled_circuits',
                             partitioner=1,
                             replace_filter='less-than')
-   """
+   
    df = pd.read_json('compiled_circuits/benchmark_circuits_optimized.json')
    df.to_csv('compiled_circuits/circuitData.csv', index=False)
       
