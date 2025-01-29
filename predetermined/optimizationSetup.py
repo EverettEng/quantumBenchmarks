@@ -11,8 +11,7 @@ from qiskit.qasm2 import dump
 from bqskit_compile.partitioner import countNumGates
 from bqskit.ext import bqskit_to_qiskit, qiskit_to_bqskit
 
-compiled_circuits = []
-compiled_circuits_times = []
+
 blockSize = 3
 partitionerDict = {
         0: f'ScanPartitioner{blockSize}',
@@ -25,21 +24,27 @@ passDict = {
 }
 replaceFilterType = 'less-than-multi'
 success_threshold_num = 1e-8
-data = []
-optimizationLevel = 3
 
-def optimizations(qc: str|Circuit|QuantumCircuit, replace_filter: str = 'always', save_path: str = None, success_threshold: float = 1e-8, partitioner: int = 0, 
+optimizationLevel = 3
+generated_circuit_name = ''
+qiskit_circuit_name = ''
+generate_circuit_condition = False
+
+def optimizations(qc: str|Circuit|QuantumCircuit|list, replace_filter: str = 'always', save_path: str = None, success_threshold: float = 1e-8, partitioner: int = 0, 
                   generate_circuit: bool = False, circuit_name: str = None):
     """
-        Helper function. Does the actual compilation. Do not call.
+        Helper function. Does the actual compilation. Do not call. Circuit name is used for randomly generated circuit
     """
-    
+    data = []
+    compiled_circuits = []
+    compiled_circuits_times = []
     
     # Stores these variables for the helper functions to use 
     partitionerType = partitioner
     replaceFilterType = replace_filter
     success_threshold_num = success_threshold
-
+    generate_circuit_condition = generate_circuit
+    
     # Runs if qc is a string (path)
     if not generate_circuit:
         
@@ -75,23 +80,25 @@ def optimizations(qc: str|Circuit|QuantumCircuit, replace_filter: str = 'always'
 
         # Gets the name of the quantum circuit before compilation 
         index = qc.rfind('/')
-        quantumCircuit_name = qc[index+1:len(qc)-5]
+        qiskit_circuit_name = qc[index+1:len(qc)-5]
         
         # Appends the compilation time (Index 2)
         compiled_circuits_times.append(endTime-startTime)
         # Appends list of data which includes the compiled circuit to compiled_circuits (Index 2).
-        compiled_circuits.append([compiled_circuit, f'{quantumCircuit_name}_OptimizationLevel{optimizationLevel}.qasm'])
+        compiled_circuits.append([compiled_circuit, f'{qiskit_circuit_name}_OptimizationLevel{optimizationLevel}.qasm'])
 
         # If there is a valid save path the circuit is saved
         if isinstance(save_path,str) and os.path.isdir(save_path):
-            dump(compiled_circuit, f'{save_path}/{quantumCircuit_name}_OptimizationLevel{optimizationLevel}.qasm')
+            dump(compiled_circuit, f'{save_path}/{qiskit_circuit_name}_OptimizationLevel{optimizationLevel}.qasm')
 
         # Runs analysis on the circuits
-        presetBqskitOptimizationAnalysis(qc=qc)
-        presetQiskitOptimizationAnalysis(qc=qc) 
+        presetBqskitOptimizationAnalysis(qc=qc, compiled_circuits=compiled_circuits, compiled_circuits_times=compiled_circuits_times, data=data)
+        presetQiskitOptimizationAnalysis(qc=qc, compiled_circuits=compiled_circuits, compiled_circuits_times=compiled_circuits_times, data=data)  
     
     # Runs if the circuit is a randomly generated circuit 
     else:
+        generated_circuit_name = circuit_name
+        
         # Checks to see if the circuit inputted is a QuantumCircuit, if it is, converts it to a Circuit so that it can be compiled in
         # bqskit
         if isinstance(qc, QuantumCircuit):
@@ -145,14 +152,15 @@ def optimizations(qc: str|Circuit|QuantumCircuit, replace_filter: str = 'always'
             dump(compiled_circuit, f'{save_path}/{quantumCircuit_name}_OptimizationLevel{optimizationLevel}.qasm')
         
         # Calls functions to collect data on the circuits
-        presetBqskitOptimizationAnalysis(qc=qc)
-        presetQiskitOptimizationAnalysis(qc=qiskit_circuit)  
+        presetBqskitOptimizationAnalysis(qc=qc, compiled_circuits=compiled_circuits, compiled_circuits_times=compiled_circuits_times, data=data)
+        presetQiskitOptimizationAnalysis(qc=qc, compiled_circuits=compiled_circuits, compiled_circuits_times=compiled_circuits_times, data=data)  
 
     # Returns a list of dictionaries containing data on the compiled circuit
+    
     return data
 
 
-def presetBqskitOptimizationAnalysis(qc: str|Circuit):
+def presetBqskitOptimizationAnalysis(qc: str|Circuit, data: list, compiled_circuits_times: list, compiled_circuits: list):
     """
         Helper function. Do not call.
     """
@@ -187,9 +195,13 @@ def presetBqskitOptimizationAnalysis(qc: str|Circuit):
         # 2-qubit depth before compilation
         original_two_q_depth = quantumCircuit.multi_qudit_depth
 
-        # Circuit name before optimization
-        index = qc.rfind('/')
-        quantumCircuit_name = qc[index+1:len(qc)-5]
+        # Circuit name before optimization if the circuit is QASM file
+        if isinstance(qc,str):
+            index = qc.rfind('/')
+            quantumCircuit_name = qc[index+1:len(qc)-5]
+         # Circuit name before optimization if it is randomly generated
+        else:
+            quantumCircuit_name = generated_circuit_name[:len(generated_circuit_name)-5]
 
         # Circuit name after optimization 
         circuit_name = compiled_circuits[i][1].replace('.qasm', '')
@@ -243,7 +255,7 @@ def presetBqskitOptimizationAnalysis(qc: str|Circuit):
         
         data.append(infoDict)
 
-def presetQiskitOptimizationAnalysis(qc: str|QuantumCircuit):
+def presetQiskitOptimizationAnalysis(qc: str|QuantumCircuit, data: list, compiled_circuits_times: list, compiled_circuits: list):
     """
         Helper function. Do not call.
     """
@@ -277,8 +289,12 @@ def presetQiskitOptimizationAnalysis(qc: str|QuantumCircuit):
     # 2-qubit depth before compilation. Need to figure out
     original_two_q_depth = 0
 
-    # Circuit name before optimization
-    quantumCircuit_name = qc[:len(qc)-5]
+    # Circuit name before optimization if it is a QASM file
+    if isinstance(qc,str):
+        quantumCircuit_name = qiskit_circuit_name
+    # Circuit name before optimization if it is randomly generated
+    else:
+        quantumCircuit_name = generated_circuit_name[:len(generated_circuit_name)-5]
 
     # Circuit name after optimization 
     circuit_name = compiled_circuits[2][1] 
@@ -333,7 +349,7 @@ def presetQiskitOptimizationAnalysis(qc: str|QuantumCircuit):
         'Average Number of Two-Qubit Gates in Each Partition Before Optimization': None,
         'Average Number of Two-Qubit Gates in Each Partition After Optimization': None,
         'Optimization Level': optimizationLevel,
-        'Randomly Generated Circuit': True if isinstance(qc, QuantumCircuit) else False,
+        'Randomly Generated Circuit': generate_circuit_condition,
         'Framework': 'Qiskit'
         }
         

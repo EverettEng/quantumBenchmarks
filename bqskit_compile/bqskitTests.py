@@ -124,7 +124,7 @@ def optimizationAnalysis(qc: str, replace_filter: str = 'always', save_path: str
         'Circuit QASM File Name Before Optimization': quantumCircuit_name,
         'Circuit QASM File Name After Optimization': circuit_name,
         'Circuit Qubit Count': qc_qubit_count,
-        'Compilation Time (seconds)': elapsedTime,
+        'Compilation Time (seconds)': elapsedTime - data[6],
         'Two-Qubit Gate Count Before Optimization': original_two_q_gates,
         'Two-Qubit Gate Count After Optimization': compiled_two_q_gates,
         'Two-Qubit Gate Depth Before Optimzation': original_two_q_depth,
@@ -144,6 +144,7 @@ def optimizationAnalysis(qc: str, replace_filter: str = 'always', save_path: str
         'Average Number of Two-Qubit Gates in Each Partition Before Optimization': data[4],
         'Average Number of Two-Qubit Gates in Each Partition After Optimization': data[5],
         'Optimization Level': None,
+        'Randomly Generated Circuit': False,
         'Framework': 'BQSkit'
         }
         

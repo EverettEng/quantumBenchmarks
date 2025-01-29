@@ -174,7 +174,7 @@ def analyzePartitions(qc: str, pass_type: int, partitioner: int, success_thresho
             sum(numTwoQGatesAfterOptimization)/len(numTwoQGatesAfterOptimization),
             eTime-sTime]
 
-def presetPartitions(qc: str|Circuit, pass_type: int, partitioner: int, success_threshold: float, save_path: str, replace_filter: str, circuit_name: str):
+def presetPartitions(qc: str|Circuit, pass_type: int, partitioner: int, success_threshold: float, save_path: str, replace_filter: str, circuit_name: str = None):
     """
     Replicates ForEachBlockPass with preset partitions
 
@@ -302,7 +302,7 @@ def presetPartitions(qc: str|Circuit, pass_type: int, partitioner: int, success_
         index = qc.rfind('/')
         file_name = qc[index+1:len(qc)-5]
     else:
-        file_name = circuit_name
+        file_name = circuit_name[:len(circuit_name)-5]
     
     # Save circuit
 
