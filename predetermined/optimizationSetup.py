@@ -39,10 +39,11 @@ def optimizations(qc: str|Circuit|QuantumCircuit|list, replace_filter: str = 'al
     compiled_circuits_times = []
     
     # Stores these variables for the helper functions to use 
-    global partitionerType, replaceFilterType, success_threshold_num, qiskit_circuit_name 
+    global partitionerType, replaceFilterType, success_threshold_num, generated_circuit_name, qiskit_circuit_name
     partitionerType = partitioner
     replaceFilterType = replace_filter
     success_threshold_num = success_threshold
+    generated_circuit_name = circuit_name
 
     
     # Runs if qc is a string (path)
@@ -53,13 +54,24 @@ def optimizations(qc: str|Circuit|QuantumCircuit|list, replace_filter: str = 'al
             #Start time of optimization
             startTime = time.time()
             
+            if 'qiskit' in qc:
+                circ1 = QuantumCircuit.from_qasm_file(qc)
+                circ2 = transpile(circ1, optimization_level=0)
+                circ = qiskit_to_bqskit(circ2)
+            else:
+                circ = Circuit.from_file(qc)
+                
+            index = qc.rfind('/')
+            circuit_name = qc[index+1:len(qc)-5]
+            
             # Optimizes the circuit using the inputted parameters
-            compiled_circuit = presetPartitions(qc=qc, 
+            compiled_circuit = presetPartitions(qc=circ, 
                             pass_type=i,
                             partitioner=partitioner,
                             success_threshold=success_threshold,
                             save_path=save_path,
-                            replace_filter=replace_filter)
+                            replace_filter=replace_filter,
+                            circuit_name=circuit_name)
             # End time of optimization
             endTime = time.time()
             
@@ -74,9 +86,10 @@ def optimizations(qc: str|Circuit|QuantumCircuit|list, replace_filter: str = 'al
         # Start of transpilation
         startTime = time.time()
         # Optimizes the circuit using optimization level 3 (optimizationLevel)
-        compiled_circuit = transpile(qiskit_circuit, optimization_level=optimizationLevel)
+        compiled_circuit = transpile(qiskit_circuit, optimization_level=optimizationLevel, basis_gates=['cx','rz','x','sx'])
         # End of transpilation
         endTime = time.time()
+        compiled_circuit.remove_final_measurements()
 
         # Gets the name of the quantum circuit before compilation 
         index = qc.rfind('/')
@@ -99,11 +112,13 @@ def optimizations(qc: str|Circuit|QuantumCircuit|list, replace_filter: str = 'al
     else:
         generated_circuit_name = circuit_name
         
-        # Checks to see if the circuit inputted is a QuantumCircuit, if it is, converts it to a Circuit so that it can be compiled in
+        # Checks to see if the circuit inputted is a QuantumCircuit, if it is, converts it to a Circuit so that it can be compiled in. Specify which framework the circuits come from before optimzizaton
         # bqskit
         if isinstance(qc, QuantumCircuit):
+            transpile(qc, optimization_level=0)
             qc = qiskit_to_bqskit(qc)
-            
+        
+        # Decompose only using qiskit w/o any optimizations (level 0) and specify basic gates. Only qiskit ciruits
         # Optimizes the circuit using both LEAP and QSearch
         for i in range(2):
             # Start time of compilation
@@ -135,9 +150,11 @@ def optimizations(qc: str|Circuit|QuantumCircuit|list, replace_filter: str = 'al
             
         # Start time of transpilation
         startTime = time.time()
-        compiled_circuit = transpile(qiskit_circuit, optimization_level=optimizationLevel)     
+        compiled_circuit = transpile(qiskit_circuit, optimization_level=optimizationLevel, basis_gates=['x','sx','cx','rz'])     
         # End time of transpilation
         endTime = time.time()
+        
+        compiled_circuit.remove_final_measurements()
 
         # Gets the name of the circuit from the circuit_name parameter since the circuit is an object instead of a file
         quantumCircuit_name = circuit_name[:len(circuit_name)-5]
@@ -153,7 +170,7 @@ def optimizations(qc: str|Circuit|QuantumCircuit|list, replace_filter: str = 'al
         
         # Calls functions to collect data on the circuits
         presetBqskitOptimizationAnalysis(qc=qc, compiled_circuits=compiled_circuits, compiled_circuits_times=compiled_circuits_times, data=data)
-        presetQiskitOptimizationAnalysis(qc=qc, compiled_circuits=compiled_circuits, compiled_circuits_times=compiled_circuits_times, data=data)  
+        presetQiskitOptimizationAnalysis(qc=qiskit_circuit, compiled_circuits=compiled_circuits, compiled_circuits_times=compiled_circuits_times, data=data)  
 
     # Returns a list of dictionaries containing data on the compiled circuit
     
@@ -332,8 +349,8 @@ def presetQiskitOptimizationAnalysis(qc: str|QuantumCircuit, data: list, compile
         'Compilation Time (seconds)': compiled_circuits_times[2],
         'Two-Qubit Gate Count Before Optimization': original_two_q_gates,
         'Two-Qubit Gate Count After Optimization': compiled_two_q_gates,
-        'Two-Qubit Gate Depth Before Optimzation': original_two_q_depth,
-        'Two-Qubit Gate Depth After Optimzation': compiled_two_q_depth,
+        'Two-Qubit Gate Depth Before Optimzation': None,
+        'Two-Qubit Gate Depth After Optimzation': None,
         'Gate Count Before Optimization': gate_count_before_optimization,
         'Gate Count After Optimization': gate_count_after_optimization,
         'Gate Set Before Optimization': before_qc_gate_set,

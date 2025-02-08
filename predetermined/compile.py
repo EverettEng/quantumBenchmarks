@@ -66,7 +66,7 @@ def predeterminedCompilation(qc: str = None, save_path: str = None, success_thre
         random_circuit = random.randint(0, len(random_circuits) - 1)
         
         # Calls the functiion at that index and stores the list that it returns
-        circuit = random_circuits[-1]()
+        circuit = random_circuits[random_circuit]()
         
         # Starts the optimization process using the inputted parameters
         circuitData = optimizations(qc=circuit[0],
