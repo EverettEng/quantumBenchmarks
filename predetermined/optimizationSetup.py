@@ -10,7 +10,7 @@ import time
 from qiskit.qasm2 import dump
 from bqskit_compile.partitioner import countNumGates
 from bqskit.ext import bqskit_to_qiskit, qiskit_to_bqskit
-
+from qiskit.converters import circuit_to_dag, dag_to_circuit
 
 blockSize = 3
 partitionerDict = {
@@ -260,7 +260,7 @@ def presetBqskitOptimizationAnalysis(qc: str|Circuit, data: list, compiled_circu
         'Optimization Algorithm Success Threshold': success_threshold_num,
         'Optimization Algorithm Replace Filter': replaceFilterType,
         'Partitioner Block Size': blockSize,
-        'Multistart Balue': '2^3',
+        'Multistart Value': '2^3',
         'Average Number of Gates in Each Partition Before Optimization': compiled_circuits[i][2],
         'Average Number of Gates in Each Partition After Optimization': compiled_circuits[i][3],
         'Average Number of Two-Qubit Gates in Each Partition Before Optimization': compiled_circuits[i][4],
@@ -334,14 +334,41 @@ def presetQiskitOptimizationAnalysis(qc: str|QuantumCircuit, data: list, compile
         before_qc_gate_set += gates[i] + ', '
     before_qc_gate_set += gates[len(gates)-1]
         
-
     # Gate set after compilation
     gates = list(circuit.count_ops())
     after_qc_gate_set = ''
     for i in range(len(gates)-1):
         after_qc_gate_set += gates[i] + ', '
     after_qc_gate_set += gates[len(gates)-1]
-
+    
+    # Two qubit gate depth before optimization
+    dag = circuit_to_dag(quantumCircuit)
+    
+    gate_types = set()
+    for node in dag.gate_nodes():
+        if len(node.qargs) == 1:
+            gate_types.add(node.op.name)
+            
+    for gate in gate_types:
+        dag.remove_all_ops_named(gate)
+        
+    new_qc = dag_to_circuit(dag)
+    two_q_gate_depth_before_optimization = new_qc.depth()
+    
+    # Two qubit gate depth after optimization
+    dag = circuit_to_dag(circuit)
+    
+    gate_types = set()
+    for node in dag.gate_nodes():
+        if len(node.qargs) == 1:
+            gate_types.add(node.op.name)
+            
+    for gate in gate_types:
+        dag.remove_all_ops_named(gate)
+        
+    new_qc = dag_to_circuit(dag)
+    two_q_gate_depth_after_optimization = new_qc.depth()
+    
     infoDict = {
         'Circuit QASM File Name Before Optimization': quantumCircuit_name,
         'Circuit QASM File Name After Optimization': circuit_name,
@@ -349,8 +376,8 @@ def presetQiskitOptimizationAnalysis(qc: str|QuantumCircuit, data: list, compile
         'Compilation Time (seconds)': compiled_circuits_times[2],
         'Two-Qubit Gate Count Before Optimization': original_two_q_gates,
         'Two-Qubit Gate Count After Optimization': compiled_two_q_gates,
-        'Two-Qubit Gate Depth Before Optimzation': None,
-        'Two-Qubit Gate Depth After Optimzation': None,
+        'Two-Qubit Gate Depth Before Optimzation': two_q_gate_depth_before_optimization,
+        'Two-Qubit Gate Depth After Optimzation': two_q_gate_depth_after_optimization,
         'Gate Count Before Optimization': gate_count_before_optimization,
         'Gate Count After Optimization': gate_count_after_optimization,
         'Gate Set Before Optimization': before_qc_gate_set,
@@ -360,7 +387,7 @@ def presetQiskitOptimizationAnalysis(qc: str|QuantumCircuit, data: list, compile
         'Optimization Algorithm Success Threshold': None,
         'Optimization Algorithm Replace Filter': None,
         'Partitioner Block Size': None,
-        'Multistart value': None,
+        'Multistart Value': None,
         'Average Number of Gates in Each Partition Before Optimization': None,
         'Average Number of Gates in Each Partition After Optimization': None,
         'Average Number of Two-Qubit Gates in Each Partition Before Optimization': None,

@@ -90,17 +90,14 @@ def construct_qiskit_bv_all_ones(num_qubits: int, num_circuits: int = 1, save_pa
         Otherwise, returns list containing a bv_all_ones QuantumCircuit and its name.
     """
   qc_list = []
-  for i in range(num_circuits):
-    qc = bv_all_ones(num_qubits=num_qubits)
-    if isinstance(save_path,str) and os.path.isdir(save_path):
-      qc.save(f'{save_path}/qiskit_bv_all_ones_{str(num_qubits)}.qasm')
-    qc_list.append([qc, f'qiskit_bv_all_ones_{str(num_qubits)}.qasm'])
-  if num_circuits > 1:
-    return qc_list
-  else:
-    return qc_list[0]
   
-def construct_random_clifford_optimized(num_qubits: int, num_circuits: int = 1, save_path: str = None):
+  qc = bv_all_ones(N=num_qubits)
+  if isinstance(save_path,str) and os.path.isdir(save_path):
+    dump(qc, f'{save_path}/qiskit_bv_all_ones_{str(num_qubits)}.qasm')
+  qc_list.append([qc, f'qiskit_bv_all_ones_{str(num_qubits)}.qasm'])
+  return qc_list
+  
+def construct_qiskit_clifford_optimized(num_qubits: int, num_circuits: int = 1, save_path: str = None):
   """Generates a BV circuit over num_qubits for an all-ones bit string.
     If a save path is inputted, creates a .qasm file for the circuit, containing the seed, number of gates, and number of qubits.
     
@@ -117,7 +114,7 @@ def construct_random_clifford_optimized(num_qubits: int, num_circuits: int = 1, 
     rand_seed = random.randint(10000, 99999)
     qc = random_clifford_optimized(num_qubits=num_qubits, seed=rand_seed)
     if isinstance(save_path,str) and os.path.isdir(save_path):
-      qc.save(f'{save_path}/bqskit_random_clifford_optimized_{str(num_qubits)}_{rand_seed}.qasm')
+      dump(qc, f'{save_path}/bqskit_random_clifford_optimized_{str(num_qubits)}_{rand_seed}.qasm')
     qc_list.append([qc, f'qiskit_random_clifford_optimized_{str(num_qubits)}_{rand_seed}.qasm'])
   if num_circuits > 1:
     return qc_list

@@ -5,10 +5,13 @@ from pathlib import Path
 from construct_benchmarks.construct_bqskit_benchmarks import (construct_bqskit_circSU2, 
                                                               construct_bqskit_dtc_unitary, 
                                                               construct_bqskit_QV, 
-                                                              construct_bqskit_random_clifford)
+                                                              construct_bqskit_clifford,
+                                                              construct_bqskit_bv_all_ones)
 from construct_benchmarks.construct_qiskit_benchmarks import (construct_qiskit_clifford_circuit,
                                                               construct_qiskit_dtc_unitary,
-                                                              construct_qiskit_multi_control_circuit)
+                                                              construct_qiskit_multi_control_circuit,
+                                                              construct_qiskit_bv_all_ones,
+                                                              construct_qiskit_clifford_optimized)
 import random
 from qiskit import QuantumCircuit
 from bqskit.ir import Circuit
@@ -22,20 +25,20 @@ def predeterminedCompilation(qc: str = None, save_path: str = None, success_thre
     Parameters:
         qc (str): Quantum circuit to be optimized. Path directory to QASM file. (Default: None)
         
-        save_path (str): Path to save the optimizedquantum circuits to. (Default: None)
+        save_path (str): Path to save the optimized quantum circuits to. (Default: None)
         
         success_threshold (float): The distance threshold that determines successful termintation. (Default: 1e-8)
         
         replace_filter (str): A predicate that determines if the resulting circuit, after calling loop_body on a block, 
-        should replace the original operation. (Default: 'always'). Supports 'less-than', 'always', and 'less-than-multi'.
+         should replace the original operation. (Default: 'always'). Supports 'less-than', 'always', and 'less-than-multi'.
 
         partitioner (int): Partitions circuit into blocks of 3 qubits. Supports ScanPartitioner and QuickPartitioner. 0 for
-        ScanPartitioner and 1 for QuickPartitioner. (Default: 0).
+         ScanPartitioner and 1 for QuickPartitioner. (Default: 0).
 
         json_path (str): Path to save JSON file containing informdation about the circuit.
         
         generate_circuit (bool): Option to compile a random algorithmic circuit instead of inputting a circuit to compile. 
-        If this is set to true, do not enter a qc parameter. (Default: False)
+         If this is set to true, do not enter a qc parameter. (Default: False)
         
         generate_circuit_num_qubits (int): Number of qubits in the randomly generated algorithmic circuit. (Default: 10) 
         
@@ -57,10 +60,13 @@ def predeterminedCompilation(qc: str = None, save_path: str = None, success_thre
         random_circuits = [lambda: construct_bqskit_circSU2(num_qubits=generate_circuit_num_qubits, num_reps=3, save_path=generated_circuit_save_path),
                            lambda: construct_bqskit_dtc_unitary(num_qubits=generate_circuit_num_qubits, save_path=generated_circuit_save_path),
                            lambda: construct_bqskit_QV(num_qubits=generate_circuit_num_qubits, depth=None, save_path=generated_circuit_save_path),
-                           lambda: construct_bqskit_random_clifford(num_qubits=generate_circuit_num_qubits, save_path=generated_circuit_save_path),
+                           lambda: construct_bqskit_clifford(num_qubits=generate_circuit_num_qubits, save_path=generated_circuit_save_path),
                            lambda: construct_qiskit_clifford_circuit(num_qubits=generate_circuit_num_qubits, save_path=generated_circuit_save_path),
                            lambda: construct_qiskit_dtc_unitary(num_qubits=generate_circuit_num_qubits, save_path=generated_circuit_save_path),
-                           lambda: construct_qiskit_multi_control_circuit(num_qubits=generate_circuit_num_qubits, save_path=generated_circuit_save_path)]
+                           lambda: construct_qiskit_multi_control_circuit(num_qubits=generate_circuit_num_qubits, save_path=generated_circuit_save_path),
+                           lambda: construct_bqskit_bv_all_ones(num_qubits=generate_circuit_num_qubits,save_path=generated_circuit_save_path),
+                           lambda: construct_qiskit_bv_all_ones(num_qubits=generate_circuit_num_qubits,save_path=generated_circuit_save_path),
+                           lambda:construct_qiskit_clifford_optimized(num_qubits=generate_circuit_num_qubits,save_path=generated_circuit_save_path)]
         
         # Gets a random index in random_circuits
         random_circuit = random.randint(0, len(random_circuits) - 1)
@@ -117,6 +123,7 @@ def predeterminedCompilation(qc: str = None, save_path: str = None, success_thre
         
         # List to store the data returned by the circuits
         circuitsData = []
+        i = 0
         # Iterates over the files
         for file in files:
             # Starts optimization process if the file is a QASM file
@@ -128,6 +135,8 @@ def predeterminedCompilation(qc: str = None, save_path: str = None, success_thre
                                              partitioner=partitioner)
                 # Adds the data of an optimized circuit to the list that stores the data
             circuitsData.append(circuitData)
+            i += 1
+            print(f'{file} has finished compiling. {len(files)-i}/{len(files)} left.')
         # If there is a valid path to save a JSON to, saves data as a JSON
         if isinstance(json_path,str) and os.path.isdir(json_path):
             index = qc.rfind('/')
