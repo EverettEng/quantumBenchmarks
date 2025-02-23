@@ -48,6 +48,9 @@ def predeterminedCompilation(qc: str = None, save_path: str = None, success_thre
         If one circuit is compiled, returns a list of dictionaries containing information about the optimization process. If multiple
         circuits are compiled, returns a list of lists of dictionaries containing information about the optimiztaion process.
     """
+    if isinstance(qc, str) and not os.path.isdir(qc) and not qc.endswith('.qasm'):
+        raise FileNotFoundError(f'{qc} is not a valid path.')
+
     # Runs if generate_circuit is true and there is no value in qc.
     # Ranomly generates a quantum circuit instead of taking an input from qc.
     if generate_circuit and qc == None:
@@ -127,6 +130,7 @@ def predeterminedCompilation(qc: str = None, save_path: str = None, success_thre
         # Iterates over the files
         for file in files:
             # Starts optimization process if the file is a QASM file
+            print(f'{file} is compiling')
             if file.endswith('qasm'):
                 circuitData = optimizations(qc=file,
                                              save_path=save_path,

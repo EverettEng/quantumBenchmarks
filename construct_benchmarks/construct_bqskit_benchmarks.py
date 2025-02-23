@@ -140,7 +140,7 @@ def construct_bqskit_clifford(num_qubits: int, num_circuits: int = 1, save_path:
         
 def construct_bqskit_bv_all_ones(num_qubits: int, save_path: str = None):
     """Generates a BV circuit over num_qubits for an all-ones bit string.
-    If a save path is inputted, creates a .qasm file for the circuit, containing the seed, number of gates, and number of qubits.
+    If a save path is inputted, creates a .qasm file for the circuit, containing the number of gates and number of qubits.
     
     Parameters:
         num_qubits (int): Required. Number of qubits for the circuit.

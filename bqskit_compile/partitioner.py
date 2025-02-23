@@ -14,12 +14,14 @@ from bqskit.passes import (QSearchSynthesisPass,
                            ForEachBlockPass,
                            ManyQuditGatesPredicate,
                            NotPredicate,
-                           NoSingleQuditGatesInModel)
+                           NoSingleQuditGatesInModel,
+                           )
 import os
 from bqskit.ir.gates import MeasurementPlaceholder, BarrierPlaceholder
 import time
 from qiskit import transpile, QuantumCircuit
-from bqskit.ext import qiskit_to_bqskit, bqskit_to_qiskit
+from bqskit.ext import qiskit_to_bqskit, bqskit_to_qiskit, model_from_backend
+from qiskit.providers.fake_provider import GenericBackendV2
 
 
 blockSize = 3
@@ -129,7 +131,7 @@ def analyzePartitions(qc: str, pass_type: int, partitioner: int, success_thresho
 
     # List of the optimized subcircuits
     optimized_subcircuit = []
-    partitionList = []
+    
     numGatesBeforeOptimization = []
     numGatesAfterOptimization = []
     numTwoQGatesBeforeOptimizatoon = []
@@ -221,7 +223,6 @@ def presetPartitions(qc: str|Circuit, pass_type: int, partitioner: int, success_
         Optimized circuit saved to the save_path and a dictionary containing information about the optimization process.
     """    
     
-
     # Instantiate compiler and get the file
     compiler = Compiler()
     if isinstance(qc,str):

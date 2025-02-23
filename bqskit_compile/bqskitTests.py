@@ -138,7 +138,7 @@ def optimizationAnalysis(qc: str, replace_filter: str = 'always', save_path: str
         'Optimization Algorithm Success Threshold': success_threshold,
         'Optimization Algorithm Replace Filter': replace_filter,
         'Partitioner Block Size': blockSize,
-        'Multistart Balue': '2^3',
+        'Multistart Value': '2^3',
         'Average Number of Gates in Each Partition Before Optimization': data[2],
         'Average Number of Gates in Each Partition After Optimization':data[3],
         'Average Number of Two-Qubit Gates in Each Partition Before Optimization': data[4],

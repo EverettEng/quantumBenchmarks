@@ -52,7 +52,7 @@ def optimizeBQSkit(qc: str,  save_path: str = None, replace_filter: str = 'alway
                                 replace_filter=replace_filter)
             
             # Checks if the json save path is a valid directory 
-            if os.path.isdir(json_path):
+            if not json_path == None and os.path.isdir(json_path):
 
                 # Gets the name of the file inputted wihtout the qasm or path
                 index = qc.rfind('/')

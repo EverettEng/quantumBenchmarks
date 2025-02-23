@@ -52,8 +52,8 @@ def optimizations(qc: str|Circuit|QuantumCircuit|list, replace_filter: str = 'al
         # Optimizes the circuit using both LEAP and QSearch
         for i in range(2):
             #Start time of optimization
-            startTime = time.time()
             
+        
             if 'qiskit' in qc:
                 circ1 = QuantumCircuit.from_qasm_file(qc)
                 circ2 = transpile(circ1, optimization_level=0)
@@ -63,7 +63,7 @@ def optimizations(qc: str|Circuit|QuantumCircuit|list, replace_filter: str = 'al
                 
             index = qc.rfind('/')
             circuit_name = qc[index+1:len(qc)-5]
-            
+            startTime = time.time() 
             # Optimizes the circuit using the inputted parameters
             compiled_circuit = presetPartitions(qc=circ, 
                             pass_type=i,
@@ -74,11 +74,11 @@ def optimizations(qc: str|Circuit|QuantumCircuit|list, replace_filter: str = 'al
                             circuit_name=circuit_name)
             # End time of optimization
             endTime = time.time()
-            
-            # Appends list of data whcih includes the compiled circuit ti compiled_circuits (Indices 0 and 1).
+            elapsedTime = endTime - startTime - compiled_circuit[-1]
+            # Appends list of data which includes the compiled circuit to compiled_circuits (Indices 0 and 1).
             # Their respective compilation times are added to a separate list (Indices 0 and 1).
             compiled_circuits.append(compiled_circuit)
-            compiled_circuits_times.append(endTime-startTime)
+            compiled_circuits_times.append((elapsedTime))
 
         # Creates a QuantumCircuit object out of the qc path
         qiskit_circuit = QuantumCircuit.from_qasm_file(qc)
@@ -300,12 +300,6 @@ def presetQiskitOptimizationAnalysis(qc: str|QuantumCircuit, data: list, compile
         if len(qubits) == 2:
             compiled_two_q_gates += 1
 
-     # 2-qubit depth after compilation. Need to figure out
-    compiled_two_q_depth = 0
-
-    # 2-qubit depth before compilation. Need to figure out
-    original_two_q_depth = 0
-
     # Circuit name before optimization if it is a QASM file
     if isinstance(qc,str):
         quantumCircuit_name = qiskit_circuit_name
@@ -351,7 +345,9 @@ def presetQiskitOptimizationAnalysis(qc: str|QuantumCircuit, data: list, compile
             
     for gate in gate_types:
         dag.remove_all_ops_named(gate)
-        
+    
+    dag.remove_all_ops_named('measure')
+    
     new_qc = dag_to_circuit(dag)
     two_q_gate_depth_before_optimization = new_qc.depth()
     
@@ -365,9 +361,13 @@ def presetQiskitOptimizationAnalysis(qc: str|QuantumCircuit, data: list, compile
             
     for gate in gate_types:
         dag.remove_all_ops_named(gate)
-        
+    
+    dag.remove_all_ops_named('measure')
+    
     new_qc = dag_to_circuit(dag)
     two_q_gate_depth_after_optimization = new_qc.depth()
+    
+    
     
     infoDict = {
         'Circuit QASM File Name Before Optimization': quantumCircuit_name,
@@ -397,4 +397,4 @@ def presetQiskitOptimizationAnalysis(qc: str|QuantumCircuit, data: list, compile
         'Framework': 'Qiskit'
         }
         
-    data.append(infoDict)        
+    data.append(infoDict)

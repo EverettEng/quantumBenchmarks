@@ -9,7 +9,7 @@ from circuits.qiskit_circuits import (
 from qiskit.qasm2 import dump
 import os
 
-def construct_qiskit_dtc_unitary(num_qubits: int, num_circuits: int = 1, save_path: str = None):
+def construct_qiskit_dtc_unitary(num_qubits: int, num_circuits: int = 1, save_path: str = None, seed: int = None):
   """Generates a random Floquet unitary circuit with a random seed and random rotation from [1,9.9999].
   If a save path is inputted, creates a .qasm file for the circuit, containing the seed, x-rotation, and number of qubits.
   
@@ -17,6 +17,7 @@ def construct_qiskit_dtc_unitary(num_qubits: int, num_circuits: int = 1, save_pa
     num_qubits (int): Required. Number of qubits for the circuit.
     num_circuits (int): Number of circuits to generate. (Default: 1).
     save_path (str): Path to save the random circuit to. (Default: None)
+    seed (int): Manual seed for the quantum circuit. If no seed is inputted, one will be generated. (Default: None)
     
   Returns:
     If num_circuits is more than 1, returns a list of lists of random DTC QuantumCircuits and their names num_circuits long. 
@@ -25,7 +26,10 @@ def construct_qiskit_dtc_unitary(num_qubits: int, num_circuits: int = 1, save_pa
   
   qc_list = []
   for i in range(num_circuits):
-    rand_seed = random.randint(10000, 99999)
+    if seed == None:
+      rand_seed = random.randint(10000, 99999)
+    else:
+      rand_seed = seed
     rand_float = rand_seed / 10000
     qc = dtc_unitary(num_qubits=num_qubits, g=rand_float, seed=rand_seed)
     if isinstance(save_path,str) and os.path.isdir(save_path):
@@ -52,7 +56,7 @@ def construct_qiskit_multi_control_circuit(num_qubits: int, save_path: str = Non
     dump(qc, save_path + '/qiskit_multi_control_' + str(num_qubits) + '.qasm')
   return [qc, 'qiskit_multi_control_' + str(num_qubits) + '.qasm']
     
-def construct_qiskit_clifford_circuit(num_qubits: int, num_circuits: int = 1, save_path: str = None):
+def construct_qiskit_clifford_circuit(num_qubits: int, num_circuits: int = 1, save_path: str = None, seed: int = None):
   """Generates a random clifford circuit using a random seed.
   If a save path is inputted, creates a .qasm file for the circuit, containing the seed and number of qubits.
    
@@ -60,6 +64,7 @@ def construct_qiskit_clifford_circuit(num_qubits: int, num_circuits: int = 1, sa
     num_qubits (int): Required. Number of qubits for the circuit.
     num_circuits (int): Number of circuits to generate. (Default: 1)
     save_path (str): Path to save the random circuit to. (Default: None)
+    seed (int): Manual seed for the quantum circuit. If no seed is inputted, one will be generated. (Default: None)
     
   Returns:
     If num_circuits is more than 1, returns a list of lists of random Clifford QuantumCircuits num_circuits long. 
@@ -67,7 +72,10 @@ def construct_qiskit_clifford_circuit(num_qubits: int, num_circuits: int = 1, sa
   """
   qc_list = []
   for i in range(num_circuits):
-    rand_seed = random.randint(10000, 99999)
+    if seed == None:
+      rand_seed = random.randint(10000, 99999)
+    else:
+      rand_seed = seed
     qc = random_clifford_circuit(num_qubits=num_qubits, seed=rand_seed)
     if isinstance(save_path,str) and os.path.isdir(save_path):
       dump(qc, save_path + '/qiskit_clifford_' + str(num_qubits) + '_' + str(rand_seed) + '.qasm')
@@ -77,7 +85,7 @@ def construct_qiskit_clifford_circuit(num_qubits: int, num_circuits: int = 1, sa
   else:
     return qc_list[0]
 
-def construct_qiskit_bv_all_ones(num_qubits: int, num_circuits: int = 1, save_path: str = None):
+def construct_qiskit_bv_all_ones(num_qubits: int, save_path: str = None):
   """Generates a BV circuit over num_qubits for an all-ones bit string.
     If a save path is inputted, creates a .qasm file for the circuit, containing the seed, number of gates, and number of qubits.
     
@@ -97,13 +105,14 @@ def construct_qiskit_bv_all_ones(num_qubits: int, num_circuits: int = 1, save_pa
   qc_list.append([qc, f'qiskit_bv_all_ones_{str(num_qubits)}.qasm'])
   return qc_list
   
-def construct_qiskit_clifford_optimized(num_qubits: int, num_circuits: int = 1, save_path: str = None):
+def construct_qiskit_clifford_optimized(num_qubits: int, num_circuits: int = 1, save_path: str = None, seed: int = None):
   """Generates a BV circuit over num_qubits for an all-ones bit string.
     If a save path is inputted, creates a .qasm file for the circuit, containing the seed, number of gates, and number of qubits.
     
     Parameters:
         num_qubits (int): Required. Number of qubits for the circuit.
         save_path (str): Path to save the quantum circuit(s) to. (Default: None)
+        seed (int): Manual seed for the quantum circuit. If no seed is inputted, one will be generated. (Default: None)
         
     Returns:
         If num_circuits is more than 1, returns a list of lists of random optimized clifford QuantumCircuits and their names num_circuits long. 
@@ -111,7 +120,10 @@ def construct_qiskit_clifford_optimized(num_qubits: int, num_circuits: int = 1, 
     """
   qc_list = []
   for i in range(num_circuits):
-    rand_seed = random.randint(10000, 99999)
+    if seed == None:
+      rand_seed = random.randint(10000, 99999)
+    else:
+      rand_seed = seed
     qc = random_clifford_optimized(num_qubits=num_qubits, seed=rand_seed)
     if isinstance(save_path,str) and os.path.isdir(save_path):
       dump(qc, f'{save_path}/bqskit_random_clifford_optimized_{str(num_qubits)}_{rand_seed}.qasm')
