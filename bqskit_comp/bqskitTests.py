@@ -9,7 +9,7 @@ from bqskit.passes import (
 from bqskit.compiler import Compiler
 from bqskit.ir import Circuit
 import time
-from bqskit_compile.partitioner import analyzePartitions, countNumGates, countTwoQGates
+from bqskit_comp.partitioner import analyzePartitions, countNumGates, countTwoQGates
 from qiskit import transpile
 from bqskit.ext import qiskit_to_bqskit, bqskit_to_qiskit
 
