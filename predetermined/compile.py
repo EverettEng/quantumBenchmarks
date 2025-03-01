@@ -2,12 +2,12 @@ import json
 import os
 from predetermined.optimizationSetup import optimizations
 from pathlib import Path
-from construct_benchmarks.construct_bqskit_benchmarks import (construct_bqskit_circSU2, 
+from construct_benchmarks.bqskit_benchmarks import (construct_bqskit_circSU2, 
                                                               construct_bqskit_dtc_unitary, 
                                                               construct_bqskit_QV, 
                                                               construct_bqskit_clifford,
                                                               construct_bqskit_bv_all_ones)
-from construct_benchmarks.construct_qiskit_benchmarks import (construct_qiskit_clifford_circuit,
+from construct_benchmarks.qiskit_benchmarks import (construct_qiskit_clifford_circuit,
                                                               construct_qiskit_dtc_unitary,
                                                               construct_qiskit_multi_control_circuit,
                                                               construct_qiskit_bv_all_ones,
@@ -50,7 +50,10 @@ def predeterminedCompilation(qc: str = None, save_path: str = None, success_thre
     """
     if isinstance(qc, str) and not os.path.isdir(qc) and not qc.endswith('.qasm'):
         raise FileNotFoundError(f'{qc} is not a valid path.')
-
+    if isinstance(save_path,str) and not os.path.isdir(save_path):
+        raise FileNotFoundError(f'{save_path} is not a valid path.')
+    if isinstance(json_path,str) and not os.path.isdir(json_path):
+        raise FileNotFoundError(f'{save_path} is not a valid path.')
     # Runs if generate_circuit is true and there is no value in qc.
     # Ranomly generates a quantum circuit instead of taking an input from qc.
     if generate_circuit and qc == None:
@@ -146,6 +149,7 @@ def predeterminedCompilation(qc: str = None, save_path: str = None, success_thre
             index = qc.rfind('/')
             qc_name = qc[index+1:]
             
+            # I lowk dont know what this does but it works
             flat_list = [item for sublist in circuitsData for item in sublist]
             # Saves file as a json 
             file_name = f'{json_path}/{qc_name}_optimized.json'

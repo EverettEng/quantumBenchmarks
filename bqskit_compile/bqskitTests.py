@@ -10,6 +10,7 @@ from bqskit.compiler import Compiler
 from bqskit.ir import Circuit
 import time
 from bqskit_compile.partitioner import analyzePartitions, countNumGates, countTwoQGates
+from qiskit import transpile
 
 # NEED TO TRY CATCH FOR JSON SAVING.
 
@@ -70,9 +71,31 @@ def optimizationAnalysis(qc: str, replace_filter: str = 'always', save_path: str
         
     # Time after compiling circuit
     eTime = time.time() 
+    
+    # Gate set before compilation
+    gates = list(quantumCircuit.gate_set)
+    before_qc_gate_set = ''
+    for i in range(len(gates)- 1):
+        before_qc_gate_set += str(gates[i]) + ', '
+    before_qc_gate_set += str(gates[len(gates)-1])
+
+
+    # Gate set after compilation
+    gates = list(circuit.gate_set)
+    after_qc_gate_set = ''
+    for j in range(len(gates)- 1):
+        after_qc_gate_set += str(gates[j]) + ', '
+    after_qc_gate_set += ' ' + str(gates[len(gates)-1])
         
     compiled_two_q_gates = 0
     original_two_q_gates = 0
+    
+     # Transpile so that there is only cx gates as the 2q gate type
+    multi_qubit_gates = [gate.name for gate, qubits, _ in quantumCircuit.data if len(qubits) > 1 and gate.name != 'cx']
+    basis_gates = list(set(before_qc_gate_set) - set(multi_qubit_gates))
+    if 'cx' not in basis_gates:
+        basis_gates.append('cx')
+    quantumCircuit = transpile(quantumCircuit, basis_gates=basis_gates, optimization_level=0)
 
     # Number of 2-qubit gates before compilation
     for gate in quantumCircuit.gate_counts:
@@ -104,21 +127,6 @@ def optimizationAnalysis(qc: str, replace_filter: str = 'always', save_path: str
 
     # Number of qubits in the circuit
     qc_qubit_count = circuit.num_qudits
-
-    # Gate set before compilation
-    gates = list(quantumCircuit.gate_set)
-    before_qc_gate_set = ''
-    for i in range(len(gates)- 1):
-        before_qc_gate_set += str(gates[i]) + ', '
-    before_qc_gate_set += str(gates[len(gates)-1])
-
-
-    # Gate set after compilation
-    gates = list(circuit.gate_set)
-    after_qc_gate_set = ''
-    for j in range(len(gates)- 1):
-        after_qc_gate_set += str(gates[j]) + ', '
-    after_qc_gate_set += ' ' + str(gates[len(gates)-1])
     
     infoDict = {
         'Circuit QASM File Name Before Optimization': quantumCircuit_name,
@@ -127,8 +135,8 @@ def optimizationAnalysis(qc: str, replace_filter: str = 'always', save_path: str
         'Compilation Time (seconds)': elapsedTime - data[6],
         'Two-Qubit Gate Count Before Optimization': original_two_q_gates,
         'Two-Qubit Gate Count After Optimization': compiled_two_q_gates,
-        'Two-Qubit Gate Depth Before Optimzation': original_two_q_depth,
-        'Two-Qubit Gate Depth After Optimzation': compiled_two_q_depth,
+        'Two-Qubit Gate Depth Before Optimization': original_two_q_depth,
+        'Two-Qubit Gate Depth After Optimization': compiled_two_q_depth,
         'Gate Count Before Optimization': countNumGates(quantumCircuit),
         'Gate Count After Optimization': countNumGates(circuit),
         'Gate Set Before Optimization': before_qc_gate_set,

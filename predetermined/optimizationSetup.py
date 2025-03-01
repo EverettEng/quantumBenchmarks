@@ -11,6 +11,7 @@ from qiskit.qasm2 import dump
 from bqskit_compile.partitioner import countNumGates
 from bqskit.ext import bqskit_to_qiskit, qiskit_to_bqskit
 from qiskit.converters import circuit_to_dag, dag_to_circuit
+from qiskit_ibm_runtime.fake_provider import FakeWashingtonV2, FakeTorino
 
 blockSize = 3
 partitionerDict = {
@@ -188,29 +189,8 @@ def presetBqskitOptimizationAnalysis(qc: str|Circuit, data: list, compiled_circu
         quantumCircuit = qc   
     
     for i in range(2):
-
-        original_two_q_gates = 0
-        compiled_two_q_gates = 0
-        
+         
         circuiti = compiled_circuits[i][0]
-
-        # Number of 2-qubit gates before compilation
-        for gate in quantumCircuit.gate_counts:
-            if gate.num_qudits == 1:
-                continue
-            original_two_q_gates += int(quantumCircuit.count(gate))
-
-        # Number of 2-qubit gates after compilation
-        for gate in circuiti.gate_counts:
-            if gate.num_qudits == 1:
-                continue
-            compiled_two_q_gates += int(circuiti.count(gate))
-
-        # 2-qubit depth after compilation
-        compiled_two_q_depth = circuiti.multi_qudit_depth
-
-        # 2-qubit depth before compilation
-        original_two_q_depth = quantumCircuit.multi_qudit_depth
 
         # Circuit name before optimization if the circuit is QASM file
         if isinstance(qc,str):
@@ -232,8 +212,7 @@ def presetBqskitOptimizationAnalysis(qc: str|Circuit, data: list, compiled_circu
         for j in range(len(gates)- 1):
             before_qc_gate_set += str(gates[j]) + ', '
         before_qc_gate_set += str(gates[len(gates)-1])
-
-
+        
         # Gate set after compilation
         gates = list(circuiti.gate_set)
         after_qc_gate_set = ''
@@ -241,6 +220,39 @@ def presetBqskitOptimizationAnalysis(qc: str|Circuit, data: list, compiled_circu
             after_qc_gate_set += str(gates[k]) + ', '
         after_qc_gate_set += ' ' + str(gates[len(gates)-1])
         
+        # Transpile so that there is only cx gates as the 2q gate type
+        quantumCircuit = bqskit_to_qiskit(quantumCircuit)
+        multi_qubit_gates = [instr.operation.name for instr in quantumCircuit.data if len(instr.qubits) > 1 and instr.operation.name != 'cx']
+
+        multi_qubit_gates = list(set(multi_qubit_gates))
+        basis_gates = []
+        gates = list(quantumCircuit.count_ops())
+        basis_gates = list(set(gates) - set(multi_qubit_gates))
+        if 'cx' not in basis_gates:
+            basis_gates.append('cx')
+        quantumCircuit = transpile(quantumCircuit, basis_gates=basis_gates, optimization_level=0)
+        quantumCircuit = qiskit_to_bqskit(quantumCircuit)
+        
+        original_two_q_gates = 0
+        compiled_two_q_gates = 0
+        
+        # Number of 2-qubit gates before compilation
+        for gate in quantumCircuit.gate_counts:
+            if gate.num_qudits == 1:
+                continue
+            original_two_q_gates += int(quantumCircuit.count(gate))
+
+        # Number of 2-qubit gates after compilation
+        for gate in circuiti.gate_counts:
+            if gate.num_qudits == 1:
+                continue
+            compiled_two_q_gates += int(circuiti.count(gate))
+            
+        # 2-qubit depth after compilation
+        compiled_two_q_depth = circuiti.multi_qudit_depth
+
+        # 2-qubit depth before compilation
+        original_two_q_depth = quantumCircuit.multi_qudit_depth
 
         infoDict = {
         'Circuit QASM File Name Before Optimization': quantumCircuit_name,
@@ -249,8 +261,8 @@ def presetBqskitOptimizationAnalysis(qc: str|Circuit, data: list, compiled_circu
         'Compilation Time (seconds)': compiled_circuits_times[i] - compiled_circuits[i][6],
         'Two-Qubit Gate Count Before Optimization': original_two_q_gates,
         'Two-Qubit Gate Count After Optimization': compiled_two_q_gates,
-        'Two-Qubit Gate Depth Before Optimzation': original_two_q_depth,
-        'Two-Qubit Gate Depth After Optimzation': compiled_two_q_depth,
+        'Two-Qubit Gate Depth Before Optimization': original_two_q_depth,
+        'Two-Qubit Gate Depth After Optimization': compiled_two_q_depth,
         'Gate Count Before Optimization': countNumGates(quantumCircuit),
         'Gate Count After Optimization': countNumGates(compiled_circuits[i][0]),
         'Gate Set Before Optimization': before_qc_gate_set,
@@ -282,23 +294,9 @@ def presetQiskitOptimizationAnalysis(qc: str|QuantumCircuit, data: list, compile
     else:
         quantumCircuit = qc
 
-    original_two_q_gates = 0
-    compiled_two_q_gates = 0
 
     # compiled circuit
     circuit = compiled_circuits[2][0]
-
-    # Number of 2-qubit gates before compilation
-    for instruction in quantumCircuit.data:
-        qubits = instruction.qubits
-        if len(qubits) == 2:
-            original_two_q_gates += 1
-
-    # Number of 2-qubit gates after compilation
-    for instruction in circuit.data:
-        qubits = instruction.qubits
-        if len(qubits) == 2:
-            compiled_two_q_gates += 1
 
     # Circuit name before optimization if it is a QASM file
     if isinstance(qc,str):
@@ -335,39 +333,33 @@ def presetQiskitOptimizationAnalysis(qc: str|QuantumCircuit, data: list, compile
         after_qc_gate_set += gates[i] + ', '
     after_qc_gate_set += gates[len(gates)-1]
     
+    original_two_q_gates = 0
+    compiled_two_q_gates = 0
+    
+    # Number of 2-qubit gates before compilation
+    # Transpile so that there is only cx gates as the 2q gate type
+    multi_qubit_gates = [gate.name for gate, qubits, _ in quantumCircuit.data if len(qubits) > 1 and gate.name != 'cx']
+    basis_gates = list(set(before_qc_gate_set) - set(multi_qubit_gates))
+    if 'cx' not in basis_gates:
+        basis_gates.append('cx')
+    quantumCircuit = transpile(quantumCircuit, basis_gates=basis_gates, optimization_level=0)
+
+    for instruction in quantumCircuit.data:
+        qubits = instruction.qubits
+        if len(qubits) > 1:
+            original_two_q_gates += 1
+
+    # Number of 2-qubit gates after compilation
+    for instruction in circuit.data:
+        qubits = instruction.qubits
+        if len(qubits) > 1:
+            compiled_two_q_gates += 1
+    
     # Two qubit gate depth before optimization
-    dag = circuit_to_dag(quantumCircuit)
-    
-    gate_types = set()
-    for node in dag.gate_nodes():
-        if len(node.qargs) == 1:
-            gate_types.add(node.op.name)
-            
-    for gate in gate_types:
-        dag.remove_all_ops_named(gate)
-    
-    dag.remove_all_ops_named('measure')
-    
-    new_qc = dag_to_circuit(dag)
-    two_q_gate_depth_before_optimization = new_qc.depth()
+    two_q_gate_depth_before_optimization = qiskit_to_bqskit(quantumCircuit).multi_qudit_depth
     
     # Two qubit gate depth after optimization
-    dag = circuit_to_dag(circuit)
-    
-    gate_types = set()
-    for node in dag.gate_nodes():
-        if len(node.qargs) == 1:
-            gate_types.add(node.op.name)
-            
-    for gate in gate_types:
-        dag.remove_all_ops_named(gate)
-    
-    dag.remove_all_ops_named('measure')
-    
-    new_qc = dag_to_circuit(dag)
-    two_q_gate_depth_after_optimization = new_qc.depth()
-    
-    
+    two_q_gate_depth_after_optimization = qiskit_to_bqskit(circuit).multi_qudit_depth
     
     infoDict = {
         'Circuit QASM File Name Before Optimization': quantumCircuit_name,
@@ -376,8 +368,8 @@ def presetQiskitOptimizationAnalysis(qc: str|QuantumCircuit, data: list, compile
         'Compilation Time (seconds)': compiled_circuits_times[2],
         'Two-Qubit Gate Count Before Optimization': original_two_q_gates,
         'Two-Qubit Gate Count After Optimization': compiled_two_q_gates,
-        'Two-Qubit Gate Depth Before Optimzation': two_q_gate_depth_before_optimization,
-        'Two-Qubit Gate Depth After Optimzation': two_q_gate_depth_after_optimization,
+        'Two-Qubit Gate Depth Before Optimization': two_q_gate_depth_before_optimization,
+        'Two-Qubit Gate Depth After Optimization': two_q_gate_depth_after_optimization,
         'Gate Count Before Optimization': gate_count_before_optimization,
         'Gate Count After Optimization': gate_count_after_optimization,
         'Gate Set Before Optimization': before_qc_gate_set,

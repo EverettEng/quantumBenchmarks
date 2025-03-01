@@ -21,7 +21,7 @@ from bqskit.ir.gates import MeasurementPlaceholder, BarrierPlaceholder
 import time
 from qiskit import transpile, QuantumCircuit
 from bqskit.ext import qiskit_to_bqskit, bqskit_to_qiskit, model_from_backend
-from qiskit.providers.fake_provider import GenericBackendV2
+
 
 
 blockSize = 3
@@ -243,6 +243,7 @@ def presetPartitions(qc: str|Circuit, pass_type: int, partitioner: int, success_
                     QuickPartitioner(block_size=blockSize)]
     
     # Compiles using the partitioner selected
+    
     out = compiler.compile(circuit, partitioners[partitioner])
     
     # Workflow
