@@ -5,6 +5,11 @@
 
 Welcome to quantumBenchmarks' documentation!
 =============================================
+Functionalities:
+
+1. Construct circuits using the BQSkit and Qiskit frameworks.  
+2. Optimize circuits in BQSkit using a customized workflow and return the circuit as well as a JSON containing information on the circuit. 
+3. Optimize circuit in both BQSkit and Qiskit using predetermined workflows. Save the optimized circuits and return a JSON containing information about them.
 
 .. toctree::
    :maxdepth: 2
