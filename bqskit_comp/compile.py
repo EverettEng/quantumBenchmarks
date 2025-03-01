@@ -1,4 +1,4 @@
-from bqskit_compile.sort_files import optimizeBQSkitFromDirectory, optimizeBQSkitFromFile
+from bqskit_comp.sort_files import optimizeBQSkitFromDirectory, optimizeBQSkitFromFile
 import json
 import os 
 

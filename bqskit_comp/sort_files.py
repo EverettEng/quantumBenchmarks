@@ -1,4 +1,4 @@
-from bqskit_compile.bqskitTests import optimizationAnalysis
+from bqskit_comp.bqskitTests import optimizationAnalysis
 import os
 from pathlib import Path
 from bqskit.ir import Circuit
