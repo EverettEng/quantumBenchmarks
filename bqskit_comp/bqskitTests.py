@@ -11,6 +11,7 @@ from bqskit.ir import Circuit
 import time
 from bqskit_compile.partitioner import analyzePartitions, countNumGates, countTwoQGates
 from qiskit import transpile
+from bqskit.ext import qiskit_to_bqskit, bqskit_to_qiskit
 
 # NEED TO TRY CATCH FOR JSON SAVING.
 
@@ -79,7 +80,6 @@ def optimizationAnalysis(qc: str, replace_filter: str = 'always', save_path: str
         before_qc_gate_set += str(gates[i]) + ', '
     before_qc_gate_set += str(gates[len(gates)-1])
 
-
     # Gate set after compilation
     gates = list(circuit.gate_set)
     after_qc_gate_set = ''
@@ -91,6 +91,7 @@ def optimizationAnalysis(qc: str, replace_filter: str = 'always', save_path: str
     original_two_q_gates = 0
     
      # Transpile so that there is only cx gates as the 2q gate type
+    quantumCircuit = bqskit_to_qiskit(quantumCircuit)
     multi_qubit_gates = [gate.name for gate, qubits, _ in quantumCircuit.data if len(qubits) > 1 and gate.name != 'cx']
     basis_gates = list(set(before_qc_gate_set) - set(multi_qubit_gates))
     if 'cx' not in basis_gates:
@@ -114,6 +115,8 @@ def optimizationAnalysis(qc: str, replace_filter: str = 'always', save_path: str
 
     # 2-qubit depth before compilation
     original_two_q_depth = quantumCircuit.multi_qudit_depth
+    
+    quantumCircuit = qiskit_to_bqskit(quantumCircuit)
         
     # time taken to compile
     elapsedTime = eTime - sTime
