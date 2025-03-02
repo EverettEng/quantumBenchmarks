@@ -6,6 +6,16 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
+import os 
+import sys
+
+sys.path.insert(0, os.path.abspath('/home/everett/SERS_project/'))
+
+import construct_benchmarks.bqskit_benchmarks
+import construct_benchmarks.qiskit_benchmarks
+import bqskit_comp.compile
+import predetermined.compile
+
 project = 'quantumBenchmarks'
 copyright = '2025, Everett Eng'
 author = 'Everett Eng'

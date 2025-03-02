@@ -1,5 +1,5 @@
 from bqskit.passes import QSearchSynthesisPass, LEAPSynthesisPass, ScanPartitioner, QuickPartitioner, UnfoldPass
-from bqskit_compile.partitioner import presetPartitions
+from bqskit_comp.partitioner import presetPartitions
 import json
 import os
 from bqskit.ir import Circuit
@@ -8,7 +8,7 @@ from qiskit.compiler import transpile
 from qiskit import QuantumCircuit
 import time
 from qiskit.qasm2 import dump
-from bqskit_compile.partitioner import countNumGates
+from bqskit_comp.partitioner import countNumGates
 from bqskit.ext import bqskit_to_qiskit, qiskit_to_bqskit
 from qiskit.converters import circuit_to_dag, dag_to_circuit
 from qiskit_ibm_runtime.fake_provider import FakeWashingtonV2, FakeTorino
