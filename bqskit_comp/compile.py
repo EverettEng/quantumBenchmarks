@@ -28,7 +28,7 @@ def optimizeBQSkit(qc: str,  save_path: str = None, replace_filter: str = 'alway
         
     If there is a valid directory entered to save the JSON file to, saves JSON of optimization data to json_path. 
     If no directory is entered, returns a list containing the dictionaries that contain information about the optimized circuits.
-    Saves circuit(s) to circuit_save_path.
+    Saves circuit(s) to save_path.
     """
     # Function to check if json is not None
     def validJSONInput():
