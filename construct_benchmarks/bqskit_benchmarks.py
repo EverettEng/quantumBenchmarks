@@ -109,8 +109,8 @@ def construct_bqskit_multi_control_circuit(num_qubits: int, save_path: str = Non
     return [qc, f'bqskit_multi_control_{str(num_qubits)}.qasm']
 
 def construct_bqskit_clifford(num_qubits: int, num_circuits: int = 1, save_path: str = None, seed: int = None):
-    """Generates a random Floquet unitary circuit with a random seed and random rotation from [1,9.9999].
-    If a save path is inputted, creates a .qasm file for the circuit, containing the seed, number of gates, and number of qubits.
+    """Generates a random Clifford circuit using a random seed. If a save path is inputted, creates a .qasm file for the circuit, 
+       containing the seed and number of qubits.
     
     Parameters:
         num_qubits (int): Required. Number of qubits for the circuit.
