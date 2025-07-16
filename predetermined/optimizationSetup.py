@@ -342,7 +342,7 @@ def presetQiskitOptimizationAnalysis(qc: str|QuantumCircuit, data: list, compile
     basis_gates = list(set(before_qc_gate_set) - set(multi_qubit_gates))
     if 'cx' not in basis_gates:
         basis_gates.append('cx')
-    quantumCircuit = transpile(quantumCircuit, basis_gates=basis_gates, optimization_level=0)
+    quantumCircuit = transpile(quantumCircuit, basis_gates=['cx','x','rz','sx'], optimization_level=0)
 
     for instruction in quantumCircuit.data:
         qubits = instruction.qubits

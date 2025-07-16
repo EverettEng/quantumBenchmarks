@@ -96,7 +96,8 @@ def optimizationAnalysis(qc: str, replace_filter: str = 'always', save_path: str
     basis_gates = list(set(before_qc_gate_set) - set(multi_qubit_gates))
     if 'cx' not in basis_gates:
         basis_gates.append('cx')
-    quantumCircuit = transpile(quantumCircuit, basis_gates=basis_gates, optimization_level=0)
+    quantumCircuit = transpile(quantumCircuit, basis_gates=['x','sx','rz','cx'], optimization_level=0)
+    quantumCircuit = qiskit_to_bqskit(quantumCircuit)
 
     # Number of 2-qubit gates before compilation
     for gate in quantumCircuit.gate_counts:
@@ -115,8 +116,6 @@ def optimizationAnalysis(qc: str, replace_filter: str = 'always', save_path: str
 
     # 2-qubit depth before compilation
     original_two_q_depth = quantumCircuit.multi_qudit_depth
-    
-    quantumCircuit = qiskit_to_bqskit(quantumCircuit)
         
     # time taken to compile
     elapsedTime = eTime - sTime
