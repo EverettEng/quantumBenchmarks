@@ -8,6 +8,7 @@ from circuits.qiskit_circuits import (
 )
 from qiskit.qasm2 import dump
 import os
+import platform
 
 def construct_qiskit_dtc_unitary(num_qubits: int, num_circuits: int = 1, save_path: str = None, seed: int = None):
   """Generates a random Floquet unitary circuit with a random seed and random rotation from [1,9.9999].
@@ -23,7 +24,8 @@ def construct_qiskit_dtc_unitary(num_qubits: int, num_circuits: int = 1, save_pa
     If num_circuits is more than 1, returns a list of lists of random DTC QuantumCircuits and their names num_circuits long. 
     Otherwise, returns a list containing a random DTC QuantumCircuit and its name.
   """
-  
+  if platform.system() == 'Windows' and save_path is not None:
+    save_path = save_path.replace('\\', '/')
   qc_list = []
   for i in range(num_circuits):
     if seed == None:
@@ -51,6 +53,8 @@ def construct_qiskit_multi_control_circuit(num_qubits: int, save_path: str = Non
   Returns:
     A list containing a multi-control QuantumCircuit and its name.
   """
+  if platform.system() == 'Windows' and save_path is not None:
+    save_path = save_path.replace('\\', '/')
   qc = multi_control_circuit(num_qubits=num_qubits)
   if isinstance(save_path,str) and os.path.isdir(save_path):
     dump(qc, save_path + '/qiskit_multi_control_' + str(num_qubits) + '.qasm')
@@ -70,6 +74,8 @@ def construct_qiskit_clifford_circuit(num_qubits: int, num_circuits: int = 1, sa
     If num_circuits is more than 1, returns a list of lists of random Clifford QuantumCircuits num_circuits long. 
     Otherwise, returns a list containing a random Clifford QuantumCircuit and its name.
   """
+  if platform.system() == 'Windows' and save_path is not None:
+    save_path = save_path.replace('\\', '/')
   qc_list = []
   for i in range(num_circuits):
     if seed == None:
@@ -97,6 +103,8 @@ def construct_qiskit_bv_all_ones(num_qubits: int, save_path: str = None):
         If num_circuits is more than 1, returns a list of lists of bv_all_ones QuantumCircuits and their names num_circuits long. 
         Otherwise, returns list containing a bv_all_ones QuantumCircuit and its name.
     """
+  if platform.system() == 'Windows' and save_path is not None:
+    save_path = save_path.replace('\\', '/')  
   qc_list = []
   
   qc = bv_all_ones(N=num_qubits)
@@ -118,6 +126,8 @@ def construct_qiskit_clifford_optimized(num_qubits: int, num_circuits: int = 1, 
         If num_circuits is more than 1, returns a list of lists of random optimized clifford QuantumCircuits and their names num_circuits long. 
         Otherwise, returns list containing a random optimized clifford QuantumCircuit and its name.
     """
+  if platform.system() == 'Windows' and save_path is not None:
+    save_path = save_path.replace('\\', '/')
   qc_list = []
   for i in range(num_circuits):
     if seed == None:

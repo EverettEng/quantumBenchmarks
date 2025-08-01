@@ -1,6 +1,7 @@
 from bqskit_comp.sort_files import optimizeBQSkitFromDirectory, optimizeBQSkitFromFile
 import json
 import os 
+import platform
 
 
 def optimizeBQSkit(qc: str,  save_path: str = None, replace_filter: str = 'always', json_path: str = None, success_threshold: float = 1e-8, 
@@ -30,6 +31,8 @@ def optimizeBQSkit(qc: str,  save_path: str = None, replace_filter: str = 'alway
     If no directory is entered, returns a list containing the dictionaries that contain information about the optimized circuits.
     Saves circuit(s) to save_path.
     """
+    if platform.system() == 'Windows' and save_path is not None:
+        save_path = save_path.replace('\\', '/')
     # Function to check if json is not None
     def validJSONInput():
         if isinstance(json_path, str):

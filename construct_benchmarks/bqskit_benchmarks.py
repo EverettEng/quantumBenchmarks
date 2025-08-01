@@ -9,7 +9,7 @@ from circuits.bqskit_circuits import (
 import random
 from bqskit import compile 
 import os
-from bqskit.ir.gates import ControlledGate
+import platform
 
 def construct_bqskit_QV(num_qubits: int, depth: int = None, num_circuits: int = 1, save_path: str = None, seed: int = None):
     """Generate random QV circuit(s). If a save path is inputted, creates a .qasm file for the circuit, containing the number of reps and number of qubits. 
@@ -25,7 +25,8 @@ def construct_bqskit_QV(num_qubits: int, depth: int = None, num_circuits: int = 
         If num_circuits is more than 1, returns a list of lists of random QV Circuits and their names num_circuits long. 
         Otherwise, returns a list containing a random QV Circuit and its name.
     """
-    
+    if platform.system() == 'Windows' and save_path is not None:
+        save_path = save_path.replace('\\', '/')
     qc_list = []
     for i in range(num_circuits):
         if seed == None:
@@ -54,6 +55,8 @@ def construct_bqskit_circSU2(num_qubits: int, num_reps: int = 3, save_path: str 
     Returns:
         A list containing the constructed SU2 Circuit and its name. 
     """
+    if platform.system() == 'Windows' and save_path is not None:
+        save_path = save_path.replace('\\', '/')
     qc = bqskit_circSU2(width=num_qubits, num_reps=num_reps)
     if isinstance(save_path,str) and os.path.isdir(save_path):
         qc.save(f'{save_path}/bqskit_su2_{str(num_qubits)}_{str(num_reps)}.qasm')
@@ -73,7 +76,8 @@ def construct_bqskit_dtc_unitary(num_qubits: int, num_circuits: int = 1, save_pa
         If num_circuits is more than 1, returns a list of lists of random DTC Circuits and their names num_circuits long. 
         Otherwise, returns list containing a random DTC Circuit and its name.
     """
-    
+    if platform.system() == 'Windows' and save_path is not None:
+        save_path = save_path.replace('\\', '/')
     qc_list = []
     for i in range(num_circuits):
         if seed == None:
@@ -100,6 +104,8 @@ def construct_bqskit_multi_control_circuit(num_qubits: int, save_path: str = Non
     Returns: 
         List containing a multi control circuit with num_qubits and its name.
     """
+    if platform.system() == 'Windows' and save_path is not None:
+        save_path = save_path.replace('\\', '/')
     qc = multi_control_circuit(num_qubits=num_qubits)
 
     qc.unfold_all()
@@ -122,6 +128,8 @@ def construct_bqskit_clifford(num_qubits: int, num_circuits: int = 1, save_path:
         If num_circuits is more than 1, returns a list of lists of random Clifford Circuits and their names num_circuits long. 
         Otherwise, returns list containing a random Clifford Circuit and its name.
     """
+    if platform.system() == 'Windows' and save_path is not None:
+        save_path = save_path.replace('\\', '/')
     
     qc_list = []
     for i in range(num_circuits):
@@ -149,6 +157,8 @@ def construct_bqskit_bv_all_ones(num_qubits: int, save_path: str = None):
     Returns:
         Returns list containing a v_all_ones Circuit and its name.
     """
+    if platform.system() == 'Windows' and save_path is not None:
+        save_path = save_path.replace('\\', '/')
     qc_list = []
     qc = bqskit_bv_all_ones(N=num_qubits)
     if isinstance(save_path,str) and os.path.isdir(save_path):

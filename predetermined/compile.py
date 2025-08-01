@@ -1,6 +1,6 @@
 import json
 import os
-from predetermined.optimizationSetup import optimizations
+from optimizationSetup import optimizations
 from pathlib import Path
 from construct_benchmarks.bqskit_benchmarks import (construct_bqskit_circSU2, 
                                                               construct_bqskit_dtc_unitary, 
@@ -13,8 +13,7 @@ from construct_benchmarks.qiskit_benchmarks import (construct_qiskit_clifford_ci
                                                               construct_qiskit_bv_all_ones,
                                                               construct_qiskit_clifford_optimized)
 import random
-from qiskit import QuantumCircuit
-from bqskit.ir import Circuit
+import platform
 
 def predeterminedCompilation(qc: str = None, save_path: str = None, success_threshold: float = 1e-8, replace_filter: str = 'always', 
     partitioner: int = 0, json_path: str = None, generate_circuit: bool = False, generate_circuit_num_qubits: int = 10, generated_circuit_save_path: str = None):
@@ -48,6 +47,8 @@ def predeterminedCompilation(qc: str = None, save_path: str = None, success_thre
         If one circuit is compiled, returns a list of dictionaries containing information about the optimization process. If multiple
         circuits are compiled, returns a list of lists of dictionaries containing information about the optimiztaion process.
     """
+    if platform.system() == 'Windows' and save_path is not None:
+        save_path = save_path.replace('\\', '/')
     if isinstance(qc, str) and not os.path.isdir(qc) and not qc.endswith('.qasm'):
         raise FileNotFoundError(f'{qc} is not a valid path.')
     if isinstance(save_path,str) and not os.path.isdir(save_path):
